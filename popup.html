@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export/Import History & Bookmarks</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="title">Export/Import<br>History & Bookmarks</h1>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="export">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export
+      </button>
+      <button class="tab-btn" data-tab="import">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Import
+      </button>
+    </div>
+
+    <!-- Export Tab -->
+    <div id="export-tab" class="tab-content active">
+      <div class="section">
+        <label class="label">What to export:</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="export-history" checked>
+            <span class="checkbox-custom"></span>
+            <span>Browser History</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="export-bookmarks" checked>
+            <span class="checkbox-custom"></span>
+            <span>Bookmarks</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="section">
+        <label class="label" for="time-period">Time Period:</label>
+        <select id="time-period" class="select">
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="7days" selected>Last 7 Days</option>
+          <option value="30days">Last 30 Days</option>
+          <option value="90days">Last 90 Days</option>
+          <option value="all">All Time</option>
+          <option value="custom">Custom Period</option>
+        </select>
+      </div>
+
+      <div id="custom-dates" class="section custom-dates" style="display: none;">
+        <div class="date-inputs">
+          <div class="date-input-group">
+            <label class="label-small">From:</label>
+            <input type="date" id="start-date" class="date-input">
+          </div>
+          <div class="date-input-group">
+            <label class="label-small">To:</label>
+            <input type="date" id="end-date" class="date-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <label class="label" for="export-format">Export Format:</label>
+        <select id="export-format" class="select">
+          <option value="json">JSON (Best for re-importing)</option>
+          <option value="html">HTML (Readable in browser)</option>
+          <option value="csv">CSV (Spreadsheet compatible)</option>
+        </select>
+      </div>
+
+      <button id="export-btn" class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export Data
+      </button>
+    </div>
+
+    <!-- Import Tab -->
+    <div id="import-tab" class="tab-content">
+      <div class="section">
+        <label class="label">Import Options:</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="import-mode" value="merge" checked>
+            <span class="radio-custom"></span>
+            <span>Merge with existing data</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="import-mode" value="replace">
+            <span class="radio-custom"></span>
+            <span>Replace existing data</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="file-upload-area" id="file-upload-area">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p class="upload-text">Click to select file or drag & drop</p>
+        <p class="upload-hint">Supports JSON, HTML, CSV files</p>
+        <input type="file" id="import-file" accept=".json,.html,.csv" hidden>
+      </div>
+
+      <button id="import-btn" class="btn btn-primary" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Import Data
+      </button>
+    </div>
+
+    <!-- Progress Section -->
+    <div id="progress-section" class="progress-section" style="display: none;">
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <p id="progress-text" class="progress-text">Processing...</p>
+    </div>
+
+    <!-- Statistics Section -->
+    <div id="stats-section" class="stats-section" style="display: none;">
+      <div class="stats-card">
+        <div class="stat-item">
+          <div class="stat-icon history-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-history">0</div>
+            <div class="stat-label">History Items</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon bookmark-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-bookmarks">0</div>
+            <div class="stat-label">Bookmarks</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <a href="https://buymeacoffee.com/ekurtovic81" target="_blank" class="coffee-link">
+        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" class="coffee-img">
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
