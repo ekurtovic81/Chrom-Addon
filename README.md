@@ -1,21 +1,66 @@
-# Export/Import History & Bookmarks - Chrome Extension
+# Export/Import History & Bookmarks - Chrome Extension v2.0
 
-A beautiful Chrome extension that allows you to export and import your browser history and bookmarks with full timestamp preservation and folder structure.
+A powerful Chrome extension that allows you to export and import your browser history and bookmarks with cloud sync, automatic backups, and intelligent duplicate detection.
+
+## 🆕 What's New in v2.0
+
+### Side Panel Interface
+- Opens on the right side of your browser for easy access
+- Always accessible without blocking your browsing
+- Larger, more comfortable interface
+
+### Cloud Storage Integration
+- **6 Cloud Providers Supported:**
+  - Google Drive
+  - Dropbox
+  - OneDrive
+  - Box
+  - pCloud
+  - MEGA
+- OAuth2 secure authentication
+- Direct export to cloud storage
+- Import from cloud storage
+
+### Automatic Backups
+- Schedule automatic backups (Daily, Weekly, Monthly)
+- Choose your preferred cloud provider
+- Select what to backup (History and/or Bookmarks)
+- Track last backup time and next scheduled backup
+
+### Smart Duplicate Detection
+- **Merge Mode:** Skips duplicate URLs
+- **Update Logic:** If URL exists but import has newer timestamp, it updates the entry
+- Detailed import statistics showing:
+  - Items added
+  - Items updated
+  - Items skipped
 
 ## Features
 
 ✨ **Export Browser History**
 - Choose time periods: Today, Yesterday, 7 days, 30 days, 90 days, All time, or Custom range
 - Export in multiple formats: JSON, HTML, CSV
+- Export to local file or cloud storage
 - Preserves original timestamps and visit counts
 
 📚 **Export/Import Bookmarks**
 - Maintains complete folder structure
 - Preserves all bookmark metadata
-- Easy backup and restore
+- Smart duplicate detection
+
+☁️ **Cloud Storage**
+- Connect multiple cloud providers
+- Secure OAuth2 authentication
+- Direct backup and restore
+
+⏰ **Auto-Backup**
+- Schedule recurring backups
+- Automatic cloud uploads
+- Backup tracking and history
 
 🎨 **Modern Design**
-- Vibrant gradient interface
+- Side panel interface
+- Vibrant gradient design
 - Smooth animations and transitions
 - Progress indicators
 - Statistics display

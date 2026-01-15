@@ -10,6 +10,25 @@ body {
   min-height: 500px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   color: #1a202c;
+  margin: 0;
+  padding: 0;
+}
+
+/* Side Panel Specific Styles */
+.side-panel-body {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.side-panel-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .container {
@@ -626,6 +645,306 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Cloud Provider Cards */
+.cloud-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cloud-provider-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cloud-provider-card:hover {
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.provider-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.google-drive-icon {
+  background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  color: white;
+}
+
+.dropbox-icon {
+  background: linear-gradient(135deg, #0061ff 0%, #0080ff 100%);
+  color: white;
+}
+
+.onedrive-icon {
+  background: linear-gradient(135deg, #0078d4 0%, #50e6ff 100%);
+  color: white;
+}
+
+.box-icon {
+  background: linear-gradient(135deg, #0061d5 0%, #00a1ff 100%);
+  color: white;
+}
+
+.pcloud-icon {
+  background: linear-gradient(135deg, #4da5e6 0%, #50c8e8 100%);
+  color: white;
+}
+
+.mega-icon {
+  background: linear-gradient(135deg, #d9272e 0%, #ff4444 100%);
+  color: white;
+}
+
+.provider-info {
+  flex: 1;
+}
+
+.provider-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.provider-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.provider-status[data-status="disconnected"] {
+  color: #94a3b8;
+}
+
+.provider-status[data-status="connected"] {
+  color: #10b981;
+}
+
+.provider-status[data-status="connecting"] {
+  color: #f59e0b;
+}
+
+.btn-connect {
+  padding: 8px 16px;
+  border: 2px solid #667eea;
+  background: transparent;
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.btn-connect:hover {
+  background: #667eea;
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-connect[data-connected="true"] {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.btn-connect[data-connected="true"]:hover {
+  background: #10b981;
+  color: white;
+}
+
+/* Help Text */
+.help-text {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* Auto Backup Info Cards */
+.auto-backup-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.info-card svg {
+  color: #667eea;
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  box-shadow: none;
+  margin-top: 12px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* Cloud Files List */
+.cloud-files-list {
+  background: #f8fafc;
+  border: 2px dashed #cbd5e0;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 20px;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-text {
+  color: #94a3b8;
+  font-size: 14px;
+  text-align: center;
+}
+
+.cloud-file-item {
+  padding: 12px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cloud-file-item:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.cloud-file-item.selected {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.file-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 2px;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Stats Detail */
+.stats-detail {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.stats-detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.stats-detail-label {
+  color: #64748b;
+}
+
+.stats-detail-value {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* Four Tab Layout */
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #f7fafc;
+  padding: 4px;
+  gap: 4px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-btn {
+  padding: 10px 8px;
+  font-size: 13px;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -638,6 +957,7 @@ body {
   }
 }
 
-.container {
+.container,
+.side-panel-container {
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

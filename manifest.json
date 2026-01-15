@@ -1,22 +1,29 @@
 {
   "manifest_version": 3,
   "name": "Export/Import History & Bookmarks",
-  "version": "1.0.0",
-  "description": "Export and import your browser history and bookmarks with timestamps and folder structure preserved",
+  "version": "2.0.0",
+  "description": "Export and import your browser history and bookmarks with cloud sync and automatic backups",
   "permissions": [
     "history",
     "bookmarks",
     "downloads",
-    "storage"
+    "storage",
+    "alarms",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://api.dropboxapi.com/*",
+    "https://graph.microsoft.com/*",
+    "https://api.box.com/*",
+    "https://api.pcloud.com/*",
+    "https://g.api.mega.co.nz/*"
   ],
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon128.png",
-      "32": "icons/icon128.png",
-      "48": "icons/icon128.png",
-      "128": "icons/icon128.png"
-    }
+    "default_title": "Export/Import History & Bookmarks"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "icons": {
     "16": "icons/icon128.png",
@@ -26,5 +33,11 @@
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "oauth2": {
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
   }
 }
