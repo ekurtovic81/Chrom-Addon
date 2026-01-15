@@ -255,11 +255,13 @@ function handleExportDestinationChange() {
   const destination = exportDestination.value;
   
   if (destination === 'cloud') {
-    // Check if any provider is connected
+    // DEVELOPMENT MODE WARNING
     if (Object.keys(connectedProviders).length === 0) {
       showProgress('Please connect a cloud storage provider first', 0);
       setTimeout(() => {
         hideProgress();
+        // Show development mode info
+        alert('DEVELOPMENT MODE: Cloud features are simulated. To enable real cloud storage, you need to:\n\n1. Register your app with each cloud provider\n2. Get OAuth2 credentials\n3. Update the extension with your credentials\n\nFor now, cloud connection is simulated for testing purposes.');
         switchTab(document.querySelector('.tab-btn[data-tab="cloud"]'));
       }, 2000);
       exportDestination.value = 'local';
