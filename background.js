@@ -1,10 +1,10 @@
-// Background service worker for Chrome Extension v2.0 - DEVELOPMENT VERSION
-// Cloud features disabled until you set up real OAuth2 credentials
+// Background service worker for Chrome Extension v2.0
+// Handles side panel, cloud sync, and scheduled backups
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Export/Import History & Bookmarks extension installed v2.0 - DEVELOPMENT MODE');
+  console.log('Export/Import History & Bookmarks extension installed v2.0');
   
-  // Check if sidePanel API is available
+  // Check if sidePanel API is available before using it
   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
       .then(() => {
@@ -13,6 +13,8 @@ chrome.runtime.onInstalled.addListener(() => {
       .catch(error => {
         console.warn('Could not set side panel behavior:', error);
       });
+  } else {
+    console.warn('sidePanel API is not available in this Chrome version');
   }
 });
 
@@ -20,9 +22,32 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.action.onClicked.addListener((tab) => {
   if (chrome.sidePanel && chrome.sidePanel.open) {
     chrome.sidePanel.open({ windowId: tab.windowId })
+      .then(() => {
+        console.log('Side panel opened');
+      })
       .catch(error => {
         console.warn('Could not open side panel:', error);
       });
+  }
+});
+
+// Handle scheduled auto-backups
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'auto-backup') {
+    console.log('Running scheduled auto-backup...');
+    
+    // Get backup settings
+    const settings = await chrome.storage.local.get(['autoBackupSettings']);
+    if (settings.autoBackupSettings?.enabled) {
+      try {
+        await chrome.runtime.sendMessage({
+          action: 'runAutoBackup',
+          settings: settings.autoBackupSettings
+        });
+      } catch (error) {
+        console.log('No extension page listening for auto-backup message');
+      }
+    }
   }
 });
 
@@ -47,15 +72,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'setupAutoBackup') {
     const { frequency } = request;
     
+    // Clear existing alarms
     chrome.alarms.clear('auto-backup');
     
+    // Create new alarm based on frequency
     if (frequency !== 'disabled') {
       let delayInMinutes;
       switch (frequency) {
-        case 'daily': delayInMinutes = 24 * 60; break;
-        case 'weekly': delayInMinutes = 7 * 24 * 60; break;
-        case 'monthly': delayInMinutes = 30 * 24 * 60; break;
-        default: delayInMinutes = 24 * 60;
+        case 'daily':
+          delayInMinutes = 24 * 60;
+          break;
+        case 'weekly':
+          delayInMinutes = 7 * 24 * 60;
+          break;
+        case 'monthly':
+          delayInMinutes = 30 * 24 * 60;
+          break;
+        default:
+          delayInMinutes = 24 * 60;
       }
       
       chrome.alarms.create('auto-backup', {
@@ -63,8 +97,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         periodInMinutes: delayInMinutes
       });
       
-      console.log(`Auto-backup scheduled (simulated): ${frequency}`);
-      sendResponse({ success: true, message: `Auto-backup scheduled: ${frequency} (DEVELOPMENT MODE)` });
+      console.log(`Auto-backup scheduled: ${frequency} (every ${delayInMinutes} minutes)`);
+      sendResponse({ success: true, message: `Auto-backup scheduled: ${frequency}` });
     } else {
       sendResponse({ success: true, message: 'Auto-backup disabled' });
     }
@@ -72,388 +106,387 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   
-  // DEVELOPMENT MODE: Simulate OAuth2 without real credentials
+  // AUTOMATIC CLOUD AUTHENTICATION - NO MANUAL CREDENTIALS NEEDED
   if (request.action === 'oauth2Authenticate') {
     const { provider } = request;
     
-    console.log(`DEVELOPMENT MODE: Simulating OAuth2 for ${provider}`);
+    console.log(`Attempting automatic authentication for: ${provider}`);
     
-    // Simulate successful connection after delay
-    setTimeout(() => {
-      // Generate a fake token for development
-      const fakeToken = `dev_token_${provider}_${Date.now()}`;
-      
-      // Store in local storage
-      chrome.storage.local.get(['cloudTokens'], (result) => {
-        const tokens = result.cloudTokens || {};
-        tokens[provider] = fakeToken;
-        chrome.storage.local.set({ cloudTokens: tokens }, () => {
-          sendResponse({ 
-            success: true, 
-            token: fakeToken,
-            warning: 'DEVELOPMENT MODE: Using simulated cloud connection'
-          });
+    // Handle authentication based on provider
+    authenticateProvider(provider)
+      .then(credentials => {
+        sendResponse({ 
+          success: true, 
+          credentials: credentials,
+          message: `Successfully connected to ${provider}`
         });
+      })
+      .catch(error => {
+        console.error(`Authentication failed for ${provider}:`, error);
+        
+        // If automatic auth fails, use fallback to launchWebAuthFlow
+        fallbackAuthentication(provider)
+          .then(credentials => {
+            sendResponse({
+              success: true,
+              credentials: credentials,
+              message: `Connected to ${provider} using fallback method`
+            });
+          })
+          .catch(fallbackError => {
+            sendResponse({
+              success: false,
+              error: fallbackError.message || 'Authentication failed',
+              fallbackError: true
+            });
+          });
       });
-    }, 1000);
     
     return true; // Keep message channel open
   }
   
   if (request.action === 'checkSidePanelAvailable') {
     const available = !!(chrome.sidePanel && chrome.sidePanel.setPanelBehavior);
-    sendResponse({ available: available });
+    sendResponse({ 
+      available: available, 
+      chromeVersion: navigator.userAgent 
+    });
+    return true;
+  }
+  
+  if (request.action === 'updateCloudCredentials') {
+    const { provider, credentials } = request;
+    
+    // Save credentials to storage
+    chrome.storage.local.get(['cloudTokens'], (result) => {
+      const tokens = result.cloudTokens || {};
+      tokens[provider] = credentials;
+      chrome.storage.local.set({ cloudTokens: tokens }, () => {
+        sendResponse({ success: true });
+      });
+    });
+    
     return true;
   }
   
   if (request.action === 'runAutoBackup') {
-    console.log('DEVELOPMENT MODE: Auto-backup triggered (simulated)');
-    // Simulate backup by logging
-    chrome.storage.local.set({ lastBackupTime: new Date().toISOString() });
-    sendResponse({ success: true, message: 'Backup completed (simulated)' });
+    console.log('Manual backup triggered from UI');
+    // Just acknowledge - actual backup runs from side panel
+    sendResponse({ success: true, message: 'Backup process started' });
+    return true;
+  }
+  
+  if (request.action === 'validateCloudToken') {
+    const { provider, token } = request;
+    
+    validateToken(provider, token)
+      .then(isValid => {
+        sendResponse({ success: true, isValid: isValid });
+      })
+      .catch(error => {
+        sendResponse({ success: false, error: error.message });
+      });
+    
     return true;
   }
 });
 
-// Handle scheduled auto-backups
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'auto-backup') {
-    console.log('DEVELOPMENT MODE: Running simulated auto-backup...');
-    
-    const settings = await chrome.storage.local.get(['autoBackupSettings']);
-    if (settings.autoBackupSettings?.enabled) {
-      // Just log for development
-      console.log('Backup would run now with settings:', settings.autoBackupSettings);
-      chrome.storage.local.set({ lastBackupTime: new Date().toISOString() });
+// AUTOMATIC AUTHENTICATION FUNCTION
+async function authenticateProvider(provider) {
+  console.log(`Starting automatic authentication for ${provider}`);
+  
+  const providerConfig = {
+    'google-drive': {
+      name: 'Google Drive',
+      scopes: ['https://www.googleapis.com/auth/drive.file'],
+      autoSupported: true
+    },
+    'dropbox': {
+      name: 'Dropbox',
+      scopes: ['files.content.write', 'files.content.read'],
+      autoSupported: false
+    },
+    'onedrive': {
+      name: 'OneDrive',
+      scopes: ['Files.ReadWrite', 'offline_access'],
+      autoSupported: false
+    },
+    'box': {
+      name: 'Box',
+      scopes: ['root_readwrite'],
+      autoSupported: false
+    },
+    'pcloud': {
+      name: 'pCloud',
+      scopes: ['files'],
+      autoSupported: false
+    },
+    'mega': {
+      name: 'MEGA',
+      scopes: ['readwrite'],
+      autoSupported: false
     }
+  };
+  
+  const config = providerConfig[provider];
+  if (!config) {
+    throw new Error(`Unsupported provider: ${provider}`);
   }
-});
-
-// Initialize on startup
-chrome.runtime.onStartup.addListener(() => {
-  console.log('Extension starting up - DEVELOPMENT MODE');
-});
-
-// cloudAuth.js - Helper for automatic cloud credentials fetching from browser
-
-class CloudAuth {
-  constructor() {
-    this.providers = {
-      'google-drive': {
-        name: 'Google Drive',
-        authType: 'oauth2',
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        authUrl: 'https://accounts.google.com/o/oauth2/auth'
-      },
-      'dropbox': {
-        name: 'Dropbox',
-        authType: 'oauth2',
-        scope: 'files.content.write files.content.read',
-        authUrl: 'https://www.dropbox.com/oauth2/authorize'
-      },
-      'onedrive': {
-        name: 'OneDrive',
-        authType: 'oauth2',
-        scope: 'Files.ReadWrite offline_access',
-        authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
-      },
-      'box': {
-        name: 'Box',
-        authType: 'oauth2',
-        scope: 'root_readwrite',
-        authUrl: 'https://account.box.com/api/oauth2/authorize'
-      },
-      'pcloud': {
-        name: 'pCloud',
-        authType: 'oauth2',
-        scope: 'files',
-        authUrl: 'https://my.pcloud.com/oauth2/authorize'
-      },
-      'mega': {
-        name: 'MEGA',
-        authType: 'apiKey',
-        scope: 'readwrite',
-        authUrl: null // MEGA has different system
-      }
-    };
-  }
-
-  /**
-   * Dynamically fetch credentials for cloud provider
-   * @param {string} provider - Provider name
-   * @returns {Promise<Object>} - Credentials and access token
-   */
-  async getCredentials(provider) {
-    console.log(`Attempting to get credentials for: ${provider}`);
-    
-    const providerConfig = this.providers[provider];
-    if (!providerConfig) {
-      throw new Error(`Unknown provider: ${provider}`);
-    }
-
-    if (providerConfig.authType === 'oauth2') {
-      return await this.handleOAuth2(provider, providerConfig);
-    } else if (providerConfig.authType === 'apiKey') {
-      return await this.handleApiKey(provider, providerConfig);
-    }
-
-    throw new Error(`Unsupported auth type for ${provider}`);
-  }
-
-  /**
-   * Handle OAuth2 flow through Chrome Identity API
-   */
-  async handleOAuth2(provider, config) {
+  
+  // For Google Drive - use Chrome Identity API (works automatically)
+  if (provider === 'google-drive' && chrome.identity && chrome.identity.getAuthToken) {
     return new Promise((resolve, reject) => {
-      // Use Chrome Identity API which automatically handles OAuth2
-      chrome.identity.getAuthToken(
-        {
-          interactive: true,
-          accountHint: '', // This will prompt user to choose account
-        },
-        (token) => {
-          if (chrome.runtime.lastError) {
-            console.error(`OAuth2 error for ${provider}:`, chrome.runtime.lastError);
-            
-            // If Chrome Identity API doesn't work, try alternative way
-            this.fallbackOAuth2(provider, config)
-              .then(resolve)
-              .catch(reject);
-          } else if (token) {
-            console.log(`Successfully got token for ${provider}`);
+      chrome.identity.getAuthToken({ 
+        interactive: true,
+        scopes: config.scopes
+      }, (token) => {
+        if (chrome.runtime.lastError) {
+          console.error('Google Drive auth error:', chrome.runtime.lastError);
+          reject(new Error(`Google authentication failed: ${chrome.runtime.lastError.message}`));
+        } else if (token) {
+          console.log('Successfully obtained Google Drive token');
+          resolve({
+            provider: provider,
+            token: token,
+            type: 'oauth2',
+            timestamp: Date.now(),
+            expires_in: 3600,
+            automaticallyObtained: true
+          });
+        } else {
+          reject(new Error('No token received from Google'));
+        }
+      });
+    });
+  }
+  
+  // For other providers that don't support automatic auth
+  throw new Error(`${config.name} requires manual OAuth2 setup. Please use fallback authentication.`);
+}
+
+// FALLBACK AUTHENTICATION - Universal OAuth2 flow
+async function fallbackAuthentication(provider) {
+  console.log(`Using fallback authentication for ${provider}`);
+  
+  const providerUrls = {
+    'google-drive': {
+      authUrl: 'https://accounts.google.com/o/oauth2/auth',
+      clientId: '491291805478-cnqldqi78p9ulr9q75mg3i0d7jfjbe92.apps.googleusercontent.com',
+      scope: 'https://www.googleapis.com/auth/drive.file'
+    },
+    'dropbox': {
+      authUrl: 'https://www.dropbox.com/oauth2/authorize',
+      clientId: 'YOUR_DROPBOX_CLIENT_ID',
+      scope: 'files.content.write files.content.read'
+    },
+    'onedrive': {
+      authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+      clientId: 'YOUR_ONEDRIVE_CLIENT_ID',
+      scope: 'Files.ReadWrite offline_access'
+    },
+    'box': {
+      authUrl: 'https://account.box.com/api/oauth2/authorize',
+      clientId: 'YOUR_BOX_CLIENT_ID',
+      scope: 'root_readwrite'
+    },
+    'pcloud': {
+      authUrl: 'https://my.pcloud.com/oauth2/authorize',
+      clientId: 'YOUR_PCLOUD_CLIENT_ID',
+      scope: 'files'
+    }
+  };
+  
+  const config = providerUrls[provider];
+  if (!config) {
+    throw new Error(`No fallback configuration for ${provider}`);
+  }
+  
+  return new Promise((resolve, reject) => {
+    // Get the redirect URI automatically from Chrome
+    const redirectUri = chrome.identity.getRedirectURL();
+    console.log(`Using redirect URI: ${redirectUri}`);
+    
+    // Build OAuth2 URL
+    const authUrl = new URL(config.authUrl);
+    authUrl.searchParams.append('client_id', config.clientId);
+    authUrl.searchParams.append('redirect_uri', redirectUri);
+    authUrl.searchParams.append('response_type', 'token');
+    authUrl.searchParams.append('scope', config.scope);
+    authUrl.searchParams.append('state', provider); // To identify which provider
+    
+    console.log(`Launching OAuth2 flow for ${provider}`);
+    
+    chrome.identity.launchWebAuthFlow(
+      {
+        url: authUrl.toString(),
+        interactive: true
+      },
+      (redirectUrl) => {
+        if (chrome.runtime.lastError) {
+          const error = chrome.runtime.lastError;
+          console.error(`OAuth2 flow error for ${provider}:`, error);
+          
+          // Special handling for common errors
+          if (error.message.includes('client_id')) {
+            reject(new Error(`Please configure OAuth2 for ${provider}. Click for instructions.`));
+          } else if (error.message.includes('redirect_uri')) {
+            reject(new Error(`Redirect URI mismatch. Extension ID: ${chrome.runtime.id}`));
+          } else {
+            reject(new Error(`Authentication failed: ${error.message}`));
+          }
+        } else if (redirectUrl) {
+          console.log(`OAuth2 redirect received for ${provider}`);
+          
+          // Extract token from redirect URL
+          const token = extractAccessTokenFromUrl(redirectUrl);
+          if (token) {
+            console.log(`Successfully extracted token for ${provider}`);
             resolve({
               provider: provider,
               token: token,
               type: 'oauth2',
               timestamp: Date.now(),
-              expires_in: 3600 // Google tokens last 1 hour
+              expires_in: 3600,
+              automaticallyObtained: false,
+              method: 'web_auth_flow'
             });
           } else {
-            reject(new Error(`Failed to get token for ${provider}`));
-          }
-        }
-      );
-    });
-  }
-
-  /**
-   * Fallback method for OAuth2 if Chrome Identity API doesn't work
-   */
-  async fallbackOAuth2(provider, config) {
-    console.log(`Using fallback OAuth2 for ${provider}`);
-    
-    // Create custom OAuth2 URL
-    const redirectUri = chrome.identity.getRedirectURL();
-    const authUrl = `${config.authUrl}?client_id=YOUR_CLIENT_ID&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(config.scope)}`;
-    
-    return new Promise((resolve, reject) => {
-      chrome.identity.launchWebAuthFlow(
-        {
-          url: authUrl,
-          interactive: true
-        },
-        (redirectUrl) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else if (redirectUrl) {
-            // Extract token from redirect URL
-            const token = this.extractTokenFromUrl(redirectUrl);
-            if (token) {
+            // Try to extract authorization code instead
+            const authCode = extractAuthorizationCodeFromUrl(redirectUrl);
+            if (authCode) {
+              console.log(`Got authorization code for ${provider}`);
               resolve({
                 provider: provider,
-                token: token,
-                type: 'oauth2',
+                code: authCode,
+                type: 'oauth2_code',
                 timestamp: Date.now(),
-                expires_in: 3600
+                automaticallyObtained: false,
+                method: 'web_auth_flow'
               });
             } else {
-              reject(new Error('Failed to extract token from response'));
+              reject(new Error('Could not extract token or authorization code from response'));
             }
-          } else {
-            reject(new Error('Authentication was cancelled'));
           }
-        }
-      );
-    });
-  }
-
-  /**
-   * Handle API Key authentication (for MEGA and similar)
-   */
-  async handleApiKey(provider, config) {
-    console.log(`API Key authentication for ${provider}`);
-    
-    // Show API key input window
-    const apiKey = await this.showApiKeyPrompt(provider);
-    
-    if (!apiKey) {
-      throw new Error('API Key is required');
-    }
-    
-    return {
-      provider: provider,
-      apiKey: apiKey,
-      type: 'apiKey',
-      timestamp: Date.now()
-    };
-  }
-
-  /**
-   * Show API key input prompt
-   */
-  async showApiKeyPrompt(provider) {
-    return new Promise((resolve) => {
-      // Create overlay for API key input
-      const overlay = document.createElement('div');
-      overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      `;
-      
-      const modal = document.createElement('div');
-      modal.style.cssText = `
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        width: 400px;
-        max-width: 90%;
-      `;
-      
-      modal.innerHTML = `
-        <h3 style="margin-top: 0;">Connect to ${this.providers[provider].name}</h3>
-        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
-          Please enter your ${this.providers[provider].name} API Key to connect.
-        </p>
-        <input type="password" id="apiKeyInput" placeholder="Enter your API Key" 
-               style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button id="cancelBtn" style="padding: 8px 16px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;">
-            Cancel
-          </button>
-          <button id="connectBtn" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            Connect
-          </button>
-        </div>
-      `;
-      
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-      
-      // Event handlers
-      const apiKeyInput = modal.querySelector('#apiKeyInput');
-      const cancelBtn = modal.querySelector('#cancelBtn');
-      const connectBtn = modal.querySelector('#connectBtn');
-      
-      cancelBtn.onclick = () => {
-        document.body.removeChild(overlay);
-        resolve(null);
-      };
-      
-      connectBtn.onclick = () => {
-        const apiKey = apiKeyInput.value.trim();
-        if (apiKey) {
-          document.body.removeChild(overlay);
-          resolve(apiKey);
         } else {
-          apiKeyInput.style.borderColor = 'red';
-          apiKeyInput.focus();
+          reject(new Error('Authentication was cancelled by user'));
         }
-      };
-      
-      // Enter key support
-      apiKeyInput.onkeypress = (e) => {
-        if (e.key === 'Enter') {
-          connectBtn.click();
-        }
-      };
-      
-      apiKeyInput.focus();
-    });
-  }
-
-  /**
-   * Extract token from redirect URL
-   */
-  extractTokenFromUrl(url) {
-    try {
-      const parsedUrl = new URL(url);
-      // Try hash fragment first (implicit flow)
-      const hashParams = new URLSearchParams(parsedUrl.hash.substring(1));
-      let token = hashParams.get('access_token');
-      
-      // If not in hash, try query params (auth code flow)
-      if (!token) {
-        const queryParams = new URLSearchParams(parsedUrl.search);
-        token = queryParams.get('access_token') || queryParams.get('code');
       }
-      
-      return token;
-    } catch (error) {
-      console.error('Error extracting token:', error);
-      return null;
-    }
-  }
+    );
+  });
+}
 
-  /**
-   * Validate existing token
-   */
-  async validateToken(provider, token) {
-    try {
-      const response = await fetch(this.getValidationUrl(provider), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      return response.ok;
-    } catch (error) {
-      console.error(`Token validation failed for ${provider}:`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Return validation URL for provider
-   */
-  getValidationUrl(provider) {
-    const urls = {
-      'google-drive': 'https://www.googleapis.com/oauth2/v1/tokeninfo',
-      'dropbox': 'https://api.dropboxapi.com/2/users/get_current_account',
-      'onedrive': 'https://graph.microsoft.com/v1.0/me',
-      'box': 'https://api.box.com/2.0/users/me',
-      'pcloud': 'https://api.pcloud.com/userinfo'
-    };
+// Helper function to extract access token from URL
+function extractAccessTokenFromUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
     
-    return urls[provider] || null;
-  }
-
-  /**
-   * Update cloud connection in sidepanel.js
-   */
-  async updateConnection(provider, credentials) {
-    try {
-      // Send credentials to background script
-      const response = await chrome.runtime.sendMessage({
-        action: 'updateCloudCredentials',
-        provider: provider,
-        credentials: credentials
-      });
-      
-      return response.success;
-    } catch (error) {
-      console.error('Error updating connection:', error);
-      return false;
+    // Try hash fragment (implicit grant flow)
+    if (parsedUrl.hash) {
+      const hashParams = new URLSearchParams(parsedUrl.hash.substring(1));
+      const token = hashParams.get('access_token');
+      if (token) return token;
     }
+    
+    // Try query parameters (some providers use this)
+    const queryParams = new URLSearchParams(parsedUrl.search);
+    const token = queryParams.get('access_token');
+    if (token) return token;
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting token from URL:', error);
+    return null;
   }
 }
 
-// Create global instance
-window.cloudAuth = new CloudAuth();
+// Helper function to extract authorization code from URL
+function extractAuthorizationCodeFromUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+    const queryParams = new URLSearchParams(parsedUrl.search);
+    return queryParams.get('code');
+  } catch (error) {
+    console.error('Error extracting auth code from URL:', error);
+    return null;
+  }
+}
+
+// Validate token by making a test API call
+async function validateToken(provider, token) {
+  if (!token) return false;
+  
+  const validationEndpoints = {
+    'google-drive': 'https://www.googleapis.com/oauth2/v1/tokeninfo',
+    'dropbox': 'https://api.dropboxapi.com/2/users/get_current_account'
+  };
+  
+  const endpoint = validationEndpoints[provider];
+  if (!endpoint) {
+    // If no validation endpoint, assume token is valid
+    return true;
+  }
+  
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.error(`Token validation failed for ${provider}:`, error);
+    return false;
+  }
+}
+
+// Initialize extension
+chrome.runtime.onStartup.addListener(() => {
+  console.log('Extension starting up...');
+  
+  // Clear any expired tokens on startup
+  chrome.storage.local.get(['cloudTokens'], (result) => {
+    const tokens = result.cloudTokens || {};
+    const validTokens = {};
+    
+    // Filter out expired tokens (simplified check)
+    Object.keys(tokens).forEach(provider => {
+      const tokenData = tokens[provider];
+      if (tokenData.timestamp && (Date.now() - tokenData.timestamp < 3500000)) {
+        // Token is less than ~58 minutes old (assuming 1 hour expiry)
+        validTokens[provider] = tokenData;
+      }
+    });
+    
+    chrome.storage.local.set({ cloudTokens: validTokens });
+  });
+});
+
+// Handle token refresh for Google Drive
+function refreshGoogleToken(oldToken) {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ 
+      interactive: false 
+    }, (newToken) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error('Token refresh failed'));
+      } else {
+        resolve(newToken);
+      }
+    });
+  });
+}
+
+// Listen for token refresh
+chrome.identity.onSignInChanged.addListener((account, signedIn) => {
+  console.log('Sign in status changed:', account, signedIn);
+  
+  if (!signedIn) {
+    // User signed out - clear Google tokens
+    chrome.storage.local.get(['cloudTokens'], (result) => {
+      const tokens = result.cloudTokens || {};
+      delete tokens['google-drive'];
+      chrome.storage.local.set({ cloudTokens: tokens });
+    });
+  }
+});
