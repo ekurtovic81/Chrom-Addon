@@ -92,49 +92,6 @@ A powerful Chrome extension that allows you to export and import your browser hi
    - Click the extension icon in your toolbar
    - The popup will open with all features ready to use
 
-### Method 2: Creating a .CRX File (For Distribution)
-
-If you want to package the extension for distribution:
-
-1. **Zip the Extension**
-   ```bash
-   cd /app
-   zip -r extension.zip extension/
-   ```
-
-2. **Create Private Key** (First time only)
-   - Go to `chrome://extensions/`
-   - Enable Developer mode
-   - Click "Pack extension"
-   - Select the extension folder
-   - Leave "Private key file" empty for first time
-   - Click "Pack Extension"
-   - Chrome will create a .crx file and .pem file
-
-3. **Share the Extension**
-   - Share the .crx file with others
-   - Recipients can drag-and-drop it into `chrome://extensions/`
-
-### Method 3: Publish to Chrome Web Store (For Public Distribution)
-
-1. **Create a Developer Account**
-   - Go to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole/)
-   - Pay the one-time $5 registration fee
-
-2. **Prepare Extension**
-   - Create a ZIP file of the extension folder
-   - Prepare screenshots (1280x800 or 640x400)
-   - Write a detailed description
-
-3. **Upload Extension**
-   - Click "New Item" in the Developer Dashboard
-   - Upload the ZIP file
-   - Fill in all required information
-   - Submit for review
-
-4. **Review Process**
-   - Google typically reviews within a few days
-   - Once approved, it will be available in the Chrome Web Store
 
 ## How to Use
 
