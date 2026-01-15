@@ -10,7 +10,6 @@
     "storage",
     "alarms",
     "identity",
-    "identity.email",
     "sidePanel"
   ],
   "host_permissions": [
@@ -19,7 +18,9 @@
     "https://graph.microsoft.com/*",
     "https://api.box.com/*",
     "https://api.pcloud.com/*",
-    "https://g.api.mega.co.nz/*"
+    "https://g.api.mega.co.nz/*",
+    "https://*.googleusercontent.com/*",
+    "https://accounts.google.com/*"
   ],
   "action": {
     "default_title": "Export/Import History & Bookmarks"
@@ -37,7 +38,7 @@
     "service_worker": "background.js"
   },
   "oauth2": {
-    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "client_id": "491291805478-cnqldqi78p9ulr9q75mg3i0d7jfjbe92.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/drive.file"
     ]
