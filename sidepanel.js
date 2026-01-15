@@ -1,6 +1,58 @@
 // Side Panel JavaScript for Export/Import History & Bookmarks v2.0
 // Includes cloud storage, auto-backup, and duplicate detection
 
+// Dodaj na POČETAK fajla - provjeri da li je side panel dostupan
+document.addEventListener('DOMContentLoaded', () => {
+  // Check if we're actually in a side panel context
+  console.log('Side panel loaded, checking API availability...');
+  
+  // Provjeri Chrome verziju
+  const chromeVersion = navigator.userAgent.match(/Chrome\/(\d+)/);
+  console.log('Chrome version:', chromeVersion ? chromeVersion[1] : 'unknown');
+  
+  // Ako je Chrome stariji od 114, prikaži upozorenje
+  if (chromeVersion && parseInt(chromeVersion[1]) < 114) {
+    const container = document.querySelector('.side-panel-container');
+    if (container) {
+      const warning = document.createElement('div');
+      warning.className = 'version-warning';
+      warning.innerHTML = `
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px; text-align: center;">
+          <strong>⚠️ Chrome Update Required</strong><br>
+          <p style="font-size: 13px; margin: 10px 0;">
+            Side panel feature requires Chrome 114 or newer.<br>
+            Your version: Chrome ${chromeVersion[1]}
+          </p>
+          <p style="font-size: 12px; color: #666;">
+            Please update Chrome to use all features, or use the popup version.
+          </p>
+        </div>
+      `;
+      container.insertBefore(warning, container.firstChild);
+    }
+  }
+  
+  // Nastavi sa normalnim inicijalizacijom
+  initSidePanel();
+});
+
+// Glavna inicijalizacija
+function initSidePanel() {
+  // Postojeći kod inicijalizacije...
+  setupEventListeners();
+  setDefaultDates();
+  loadSettings();
+  loadConnectedProviders();
+  
+  console.log('Side panel initialized successfully');
+}
+
+// Ostatak tvog sidepanel.js koda ostaje isti...
+// (sve funkcije koje si već imao)
+
+// Side Panel JavaScript for Export/Import History & Bookmarks v2.0
+// Includes cloud storage, auto-backup, and duplicate detection
+
 // DOM Elements
 const tabs = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
