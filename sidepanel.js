@@ -196,10 +196,11 @@ function updateProviderStatus(provider, status) {
   }
 }
 
-// Handle Cloud Connect
+// Handle Cloud Connect - NEW WAY
 async function handleCloudConnect(provider) {
   const btn = document.querySelector(`.btn-connect[data-provider="${provider}"]`);
   
+  // Check if already connected
   if (btn.dataset.connected === 'true') {
     // Disconnect
     delete cloudTokens[provider];
@@ -210,29 +211,42 @@ async function handleCloudConnect(provider) {
     return;
   }
   
-  // Connect
+  // Connect - use cloudAuth helper
   updateProviderStatus(provider, 'connecting');
   showProgress(`Connecting to ${getProviderName(provider)}...`, 30);
   
   try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'oauth2Authenticate',
-      provider: provider
-    });
+    // Use cloudAuth.js helper for automatic credentials fetching
+    const credentials = await cloudAuth.getCredentials(provider);
     
-    if (response.success) {
-      cloudTokens[provider] = response.token;
-      await chrome.storage.local.set({ cloudTokens });
-      updateProviderStatus(provider, 'connected');
-      showProgress(`Connected to ${getProviderName(provider)}!`, 100);
-      setTimeout(() => hideProgress(), 2000);
-    } else {
-      throw new Error(response.error);
-    }
+    // Save credentials
+    cloudTokens[provider] = credentials;
+    await chrome.storage.local.set({ cloudTokens });
+    
+    // Update UI
+    updateProviderStatus(provider, 'connected');
+    connectedProviders[provider] = true;
+    
+    // Update button
+    btn.textContent = 'Disconnect';
+    btn.dataset.connected = 'true';
+    
+    showProgress(`Connected to ${getProviderName(provider)}!`, 100);
+    setTimeout(() => hideProgress(), 2000);
+    
   } catch (error) {
-    console.error('Cloud connection error:', error);
+    console.error(`Cloud connection error for ${provider}:`, error);
     updateProviderStatus(provider, 'disconnected');
-    showProgress(`Error: ${error.message}`, 0);
+    
+    // Show user-friendly message
+    let errorMessage = error.message;
+    if (errorMessage.includes('client_id')) {
+      errorMessage = 'Extension needs OAuth2 setup. Please configure in extension settings.';
+    } else if (errorMessage.includes('cancelled')) {
+      errorMessage = 'Connection cancelled by user.';
+    }
+    
+    showProgress(`Error: ${errorMessage}`, 0);
     setTimeout(() => hideProgress(), 3000);
   }
 }
