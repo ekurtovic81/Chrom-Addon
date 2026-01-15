@@ -507,22 +507,28 @@ async function handleExport() {
   }
 }
 
-// Upload to Cloud
+// Upload to Cloud - DEVELOPMENT VERSION
 async function uploadToCloud(content, filename, mimeType) {
-  showProgress('Uploading to cloud...', 90);
+  showProgress('Simulating cloud upload (Dev Mode)...', 90);
   
   const provider = Object.keys(connectedProviders)[0];
-  const token = cloudTokens[provider];
   
-  if (!token) {
+  if (!provider) {
     throw new Error('No cloud provider connected');
   }
   
-  // This is a placeholder - actual implementation would use provider-specific APIs
-  // For now, we'll simulate the upload
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  console.log(`Uploaded ${filename} to ${getProviderName(provider)}`);
+  // DEVELOPMENT MODE: Simulate upload
+  return new Promise(resolve => {
+    setTimeout(() => {
+      console.log(`DEVELOPMENT: Simulated upload of ${filename} to ${getProviderName(provider)}`);
+      showProgress(`Simulated upload to ${getProviderName(provider)} complete!`, 100);
+      
+      // Show info alert
+      alert(`DEVELOPMENT MODE: File upload simulated.\n\nIn production, this would upload:\nFile: ${filename}\nSize: ${(content.length / 1024).toFixed(1)} KB\nTo: ${getProviderName(provider)}\n\nTo enable real uploads, set up OAuth2 credentials.`);
+      
+      resolve();
+    }, 1500);
+  });
 }
 
 // Import Functionality with Duplicate Detection
