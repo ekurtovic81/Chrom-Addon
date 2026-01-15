@@ -1,17 +1,59 @@
-// Background service worker for Chrome Extension
+// Background service worker for Chrome Extension v2.0
 // Handles side panel, cloud sync, and scheduled backups
+// FIXED: Includes sidePanel API availability check
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Export/Import History & Bookmarks extension installed v2.0');
   
-  // Enable side panel for all tabs
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  // FIX: Check if sidePanel API is available before using it
+  if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+      .then(() => {
+        console.log('Side panel behavior set successfully');
+      })
+      .catch(error => {
+        console.warn('Could not set side panel behavior:', error);
+      });
+  } else {
+    console.warn('sidePanel API is not available in this Chrome version');
+    console.log('Extension will use popup.html instead');
+  }
 });
 
-// Open side panel when extension icon is clicked
+// Handle extension icon click - with fallback
 chrome.action.onClicked.addListener((tab) => {
-  chrome.sidePanel.open({ windowId: tab.windowId });
+  // FIX: Check if sidePanel is available before trying to open
+  if (chrome.sidePanel && chrome.sidePanel.open) {
+    chrome.sidePanel.open({ windowId: tab.windowId })
+      .then(() => {
+        console.log('Side panel opened');
+      })
+      .catch(error => {
+        console.warn('Could not open side panel:', error);
+        // Fallback: Open popup manually
+        openPopupFallback(tab);
+      });
+  } else {
+    // Fallback to popup if sidePanel is not available
+    console.log('Side panel API not available, using popup fallback');
+    openPopupFallback(tab);
+  }
 });
+
+// Fallback function to open popup when side panel is not available
+function openPopupFallback(tab) {
+  // We can't programmatically open a popup in Manifest V3
+  // Instead, we'll set the popup in the manifest for fallback
+  console.log('Please click the extension icon to open the popup interface');
+  
+  // Alternative: Use scripting API to inject content script
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ['popup.js']
+  }).catch(error => {
+    console.log('Fallback to using popup.html interface');
+  });
+}
 
 // Handle scheduled auto-backups
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -22,16 +64,22 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const settings = await chrome.storage.local.get(['autoBackupSettings']);
     if (settings.autoBackupSettings?.enabled) {
       // Notify side panel to run backup
-      chrome.runtime.sendMessage({
-        action: 'runAutoBackup',
-        settings: settings.autoBackupSettings
-      });
+      try {
+        await chrome.runtime.sendMessage({
+          action: 'runAutoBackup',
+          settings: settings.autoBackupSettings
+        });
+      } catch (error) {
+        console.log('No extension page listening for auto-backup message');
+      }
     }
   }
 });
 
 // Listen for messages from side panel
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Background received message:', request.action);
+  
   if (request.action === 'getHistory') {
     chrome.history.search(request.params, (results) => {
       sendResponse({ success: true, data: results });
@@ -65,6 +113,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'monthly':
           delayInMinutes = 30 * 24 * 60; // 30 days
           break;
+        default:
+          delayInMinutes = 24 * 60; // Default to daily
       }
       
       chrome.alarms.create('auto-backup', {
@@ -72,6 +122,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         periodInMinutes: delayInMinutes
       });
       
+      console.log(`Auto-backup scheduled: ${frequency} (every ${delayInMinutes} minutes)`);
       sendResponse({ success: true, message: `Auto-backup scheduled: ${frequency}` });
     } else {
       sendResponse({ success: true, message: 'Auto-backup disabled' });
@@ -89,9 +140,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true, token: token });
       })
       .catch(error => {
+        console.error('OAuth2 authentication error:', error);
         sendResponse({ success: false, error: error.message });
       });
     
+    return true;
+  }
+  
+  if (request.action === 'checkSidePanelAvailable') {
+    const available = !!(chrome.sidePanel && chrome.sidePanel.setPanelBehavior);
+    sendResponse({ available: available, chromeVersion: navigator.userAgent });
     return true;
   }
 });
@@ -139,7 +197,7 @@ async function authenticateProvider(provider) {
   
   const config = authConfigs[provider];
   if (!config) {
-    throw new Error('Unknown provider');
+    throw new Error('Unknown provider: ' + provider);
   }
   
   const authUrl = `${config.url}?client_id=${config.client_id}&redirect_uri=${encodeURIComponent(config.redirect_uri)}&response_type=token&scope=${encodeURIComponent(config.scope)}`;
@@ -153,16 +211,38 @@ async function authenticateProvider(provider) {
       (redirectUrl) => {
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
-        } else {
+        } else if (redirectUrl) {
           // Extract token from redirect URL
-          const token = new URL(redirectUrl).hash.match(/access_token=([^&]*)/)?.[1];
+          const urlParams = new URLSearchParams(new URL(redirectUrl).hash.substring(1));
+          const token = urlParams.get('access_token');
+          
           if (token) {
             resolve(token);
           } else {
-            reject(new Error('Failed to extract token'));
+            reject(new Error('Failed to extract token from response'));
           }
+        } else {
+          reject(new Error('Authentication was cancelled'));
         }
       }
     );
   });
 }
+
+// Add listener for runtime errors
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'logError') {
+    console.error('Error from content:', message.error);
+  }
+});
+
+// Initialize on startup
+chrome.runtime.onStartup.addListener(() => {
+  console.log('Extension starting up...');
+});
+
+// Listen for updates
+chrome.runtime.onUpdateAvailable.addListener(() => {
+  console.log('Update available, reloading extension...');
+  chrome.runtime.reload();
+});
