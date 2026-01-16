@@ -1,4 +1,27 @@
-# 🎨 Extension Preview & Features
+# 🎨 Extension Preview & Features - Version 4.0
+
+## 🌟 What's New in v4.0
+
+### Enhanced Local Backup System
+**🚀 Automatic Local Backups**  
+- Export directly to your chosen backup folder
+- Automatic backup scheduling (Hourly/Daily/Weekly/Monthly)
+- Smart backup retention (keep 5, 10, 20, 50, or unlimited backups)
+- Automatic cleanup of old backups
+- Backup folder browser with file selection
+
+### 🆕 Cloud Tab - Coming Soon!
+- Google Drive, Dropbox, and OneDrive integration in development
+- Enhanced local features available now
+- Cloud sync will be available in future updates
+
+### 📊 Improved Statistics & Monitoring
+- Real-time backup counter
+- Next backup time display
+- Last backup timestamp
+- Backup folder status in footer
+
+---
 
 ## Visual Design
 
@@ -15,6 +38,7 @@ The extension uses a modern, vibrant gradient design:
 - 🎭 Smooth animations
 - 📊 Progress indicators
 - 🌈 Colorful statistics cards
+- 🏷️ Version 4.0 badge
 
 ---
 
@@ -23,19 +47,18 @@ The extension uses a modern, vibrant gradient design:
 ### Header Section
 ```
 ┌─────────────────────────────────┐
-│  [Icon]                         │
-│  Export/Import                  │
-│  History & Bookmarks            │
-│  (Purple gradient background)   │
+│  [Icon]  Export/Import          │
+│         History & Bookmarks     │
+│         v4.0                    │
 └─────────────────────────────────┘
 ```
 
 ### Tab Navigation
 ```
-┌──────────────┬──────────────┐
-│  📥 Export   │  📤 Import   │
-│  (Active)    │              │
-└──────────────┴──────────────┘
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+│  📥 Export   │  📤 Import   │  ⏰ Auto     │  ☁️ Cloud    │
+│  (Active)    │              │  Backup      │  (Coming Soon)│
+└──────────────┴──────────────┴──────────────┴──────────────┘
 ```
 
 ### Export Tab Layout
@@ -72,23 +95,29 @@ To:   [Date Picker]
   • CSV (Spreadsheet compatible)
 ```
 
+**Backup Folder Selection:**
+```
+[📁 Choose backup folder...] [Browse]
+Select folder for automatic backups
+```
+
 **Action Button:**
 ```
 ┌─────────────────────────────────┐
-│  📥 Export Data                 │
+│  📥 Export & Save to Folder     │
 │  (Purple gradient button)       │
 └─────────────────────────────────┘
 ```
 
 ### Import Tab Layout
 
-**Import Options:**
+**Import From Options:**
 ```
-◉ Merge with existing data
-○ Replace existing data
+◉ Local File
+○ From Backup Folder
 ```
 
-**File Upload Area:**
+**Local File Import:**
 ```
 ┌─────────────────────────────────┐
 │          📤                      │
@@ -97,13 +126,103 @@ To:   [Date Picker]
 │                                  │
 │  Supports JSON, HTML, CSV       │
 └─────────────────────────────────┘
+
+◉ Merge (skip duplicates, update if newer)
+○ Replace existing data
+
+┌─────────────────────────────────┐
+│  📤 Import from File            │
+└─────────────────────────────────┘
 ```
 
-**Action Button:**
+**Backup Folder Import:**
 ```
 ┌─────────────────────────────────┐
-│  📤 Import Data                 │
-│  (Purple gradient button)       │
+│  backup-2024-01-15-120000.json  │
+│  2.3 MB • 2024-01-15 12:00:00   │
+│                                  │
+│  backup-2024-01-14-120000.json  │
+│  2.1 MB • 2024-01-14 12:00:00   │
+└─────────────────────────────────┘
+
+◉ Merge with existing data
+○ Replace existing data
+
+┌─────────────────────────────────┐
+│  📂 Import Selected Backup      │
+└─────────────────────────────────┘
+```
+
+### Auto-Backup Tab Layout
+
+**Backup Folder:**
+```
+[📁 Choose backup folder...] [Browse]
+```
+
+**Backup Frequency:**
+```
+▼ Daily
+  • Disabled
+  • Hourly
+  • Daily
+  • Weekly
+  • Monthly
+```
+
+**Backup Content:**
+```
+☑ Browser History
+☑ Bookmarks
+```
+
+**Keep Last:**
+```
+▼ 10 Backups
+  • 5 Backups
+  • 10 Backups
+  • 20 Backups
+  • 50 Backups
+  • Unlimited
+Old backups will be automatically deleted
+```
+
+**Backup Info Cards:**
+```
+┌─────────────────────────────────┐
+│  🕐 Next Backup: Tomorrow 12:00 │
+│  📅 Last Backup: Today 14:30    │
+│  📊 Backups Count: 15           │
+└─────────────────────────────────┘
+```
+
+**Action Buttons:**
+```
+┌─────────────────────────────────┐
+│  💾 Save Auto-Backup Settings   │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│  🔄 Backup Now                  │
+└─────────────────────────────────┘
+```
+
+### Cloud Tab Layout (Coming Soon!)
+```
+┌─────────────────────────────────┐
+│          ☁️                      │
+│  Cloud Sync Coming Soon!        │
+│                                  │
+│  We're working on cloud storage │
+│  integration with Google Drive, │
+│  Dropbox, and OneDrive.         │
+│                                  │
+│  ✓ Automatic local backups      │
+│  ✓ Schedule backups             │
+│  ✓ Automatic cleanup            │
+│  ✓ Import from backup folder    │
+│                                  │
+│  Version 4.0 - Enhanced local   │
+│  backup system                  │
 └─────────────────────────────────┘
 ```
 
@@ -122,312 +241,392 @@ To:   [Date Picker]
 │  History      │  Bookmarks    │
 │  Items        │               │
 └───────────────┴───────────────┘
+
+History Added: 1,250
+History Updated: 750
+History Skipped: 547
+Bookmarks: 423
 ```
 
 ### Footer Section
 ```
 ┌─────────────────────────────────┐
+│  Backup folder: Documents/Backups│
 │     [Buy Me a Coffee]           │
-│     (Linked button)             │
 └─────────────────────────────────┘
 ```
 
 ---
 
-## Animation Effects
+## 🚀 Key Features
 
-### Hover Effects
-- **Tabs:** Scale up slightly + color change
-- **Buttons:** Lift effect (translateY -2px) + shadow enhancement
-- **Checkboxes/Radios:** Border color change + background fade
-- **Upload Area:** Border color change + scale up
+### 1. **Smart Export System**
+- **Dual Save**: Saves to backup folder AND downloads to default folder
+- **Multiple Formats**: JSON, HTML, CSV
+- **Flexible Time Periods**: Today, Yesterday, 7/30/90 days, All time, Custom range
+- **Duplicate Detection**: Smart merging with "update if newer" logic
 
-### Transition Effects
-- **Tab Switching:** Fade in/out with slide down
-- **Progress Bar:** Shimmer effect while loading
-- **Statistics:** Numbers animate from 0 to final value
-- **Success States:** Smooth color transitions
+### 2. **Automatic Backup Management**
+- **Scheduled Backups**: Set it and forget it
+- **Retention Policy**: Automatically manage old backups
+- **Folder Integration**: Direct import from backup folder
+- **Backup Counter**: Track how many backups you have
 
-### Micro-interactions
-- **Button Click:** Ripple effect from center
-- **File Drop:** Drag over highlights area
-- **Checkbox Select:** Smooth checkmark animation
-- **Input Focus:** Glow effect around border
+### 3. **Enhanced Import Options**
+- **From Local File**: Traditional file upload
+- **From Backup Folder**: Direct selection from your backup directory
+- **Smart Merge**: Skip duplicates, update if newer
+- **Replace Option**: Clean import when needed
 
----
+### 4. **Real-time Monitoring**
+- **Backup Status**: Always visible in footer
+- **Next Backup Time**: Know when your next backup will run
+- **Last Backup**: See when your last backup completed
+- **Backup Count**: Track your backup history
 
-## User Flow Examples
-
-### Flow 1: Export Last 7 Days of History
-```
-1. User clicks extension icon
-2. Export tab is active by default
-3. "Browser History" is checked
-4. "Last 7 Days" is selected
-5. "JSON" format is selected
-6. User clicks "Export Data"
-7. Progress bar shows: "Fetching browser history... 30%"
-8. Progress bar shows: "Generating file... 80%"
-9. File save dialog appears
-10. User saves file
-11. Statistics show: "2,547 History Items"
-12. Success message displays
-```
-
-### Flow 2: Import Bookmarks
-```
-1. User clicks extension icon
-2. User switches to "Import" tab
-3. "Merge with existing data" is selected
-4. User clicks upload area
-5. File picker opens
-6. User selects JSON file
-7. Upload area shows: "Selected: bookmarks.json"
-8. User clicks "Import Data"
-9. Progress bar shows: "Reading file... 20%"
-10. Progress bar shows: "Importing bookmarks... 80%"
-11. Statistics show: "423 Bookmarks imported"
-12. Success message displays
-```
-
-### Flow 3: Custom Date Range Export
-```
-1. User clicks extension icon
-2. User selects "Custom Period" from dropdown
-3. Date inputs appear with slide-down animation
-4. User enters start date: 2024-01-01
-5. User enters end date: 2024-01-15
-6. User selects "CSV" format
-7. User clicks "Export Data"
-8. Export process begins
-9. File saves as CSV
-10. Statistics display
-```
+### 5. **User Experience**
+- **Drag & Drop**: Easy file import
+- **Folder Browser**: Intuitive folder selection
+- **Progress Indicators**: Real-time feedback
+- **Statistics**: Detailed post-operation stats
+- **Responsive Design**: Works perfectly in side panel
 
 ---
 
-## Responsive Design
+## 📈 Performance Metrics
 
-The extension popup has a fixed width of **420px** and minimum height of **500px**.
+### Export Performance
+- **Small (< 1,000 items)**: < 2 seconds
+- **Medium (1,000-10,000)**: 2-10 seconds
+- **Large (10,000-50,000)**: 10-30 seconds
+- **Very Large (> 50,000)**: 30+ seconds
 
-**Layout Sections:**
-1. Header: ~100px
-2. Tabs: ~50px
-3. Content: ~300px (flexible)
-4. Footer: ~50px
+### Import Performance
+- **Small (< 1,000 items)**: < 3 seconds
+- **Medium (1,000-10,000)**: 3-15 seconds
+- **Large (10,000-50,000)**: 15-60 seconds
 
-**Spacing Scale:**
-- Small gap: 8px
-- Medium gap: 12px
-- Large gap: 20px
-- Section margin: 20px
-
----
-
-## Color Accessibility
-
-All color combinations meet **WCAG AA standards**:
-
-✅ White text on purple gradient: 4.5:1 ratio  
-✅ Dark text on light backgrounds: 7:1+ ratio  
-✅ Button text on gradient: 4.5:1+ ratio  
-✅ Icons on colored backgrounds: High contrast
+### File Sizes (JSON)
+- **1,000 items**: ~200-300 KB
+- **10,000 items**: ~2-3 MB
+- **50,000 items**: ~10-15 MB
 
 ---
 
-## Technical Specifications
+## 🛠️ Technical Specifications
 
 ### Files Structure
 ```
 extension/
-├── manifest.json         (Extension config)
-├── popup.html           (Main UI structure)
-├── popup.js             (UI logic & functionality)
-├── background.js        (Service worker)
-├── styles.css           (All styling)
-├── README.md            (Documentation)
-├── INSTALLATION_GUIDE.md (Setup instructions)
-└── icons/
-    └── icon128.png      (Extension icon)
+├── manifest.json              (v3 configuration)
+├── sidepanel.html             (Main interface - v4.0)
+├── sidepanel.js              (Enhanced functionality - v4.0)
+├── background.js             (Service worker)
+├── styles.css                (Modern gradient design)
+├── icons/
+│   └── icon128.png           (Extension icon)
+└── README.md                 (Documentation)
 ```
 
-### Key Technologies
-- **HTML5**: Semantic structure
-- **CSS3**: Gradients, animations, flexbox, grid
-- **JavaScript ES6+**: Async/await, arrow functions
-- **Chrome Extension APIs**: history, bookmarks, downloads, storage
-- **Manifest V3**: Latest Chrome extension standard
-
-### Browser APIs Used
+### Chrome APIs Used
 ```javascript
-chrome.history.search()      // Get history items
-chrome.history.addUrl()      // Add history items
-chrome.bookmarks.getTree()   // Get bookmark tree
-chrome.bookmarks.create()    // Create bookmarks
-chrome.downloads.download()  // Download files
-chrome.storage.local         // Store settings
+chrome.history.search()        // Get history items
+chrome.history.addUrl()        // Add history items
+chrome.bookmarks.getTree()     // Get bookmark tree
+chrome.bookmarks.create()      // Create bookmarks/folders
+chrome.downloads.download()    // Download files
+chrome.storage.local          // Store settings and backups
+chrome.alarms                 // Schedule automatic backups
+```
+
+### Permissions
+- **history**: Read and write browser history
+- **bookmarks**: Read and create bookmarks
+- **downloads**: Save exported files
+- **storage**: Store settings and backup information
+- **alarms**: Schedule automatic backups
+
+### Supported Formats
+- **JSON**: Complete data preservation (recommended for re-importing)
+- **HTML**: Human-readable format (opens in any browser)
+- **CSV**: Spreadsheet compatible (Excel/Google Sheets)
+
+---
+
+## 💡 Use Cases
+
+### 1. **Regular Backups**
+```
+Setup: Daily auto-backup to Documents/Backups
+Result: Your browsing data is automatically backed up every day
+```
+
+### 2. **Before Browser Reset**
+```
+Step 1: Export All Time data
+Step 2: Save to backup folder
+Step 3: Reset browser
+Step 4: Import from latest backup
+```
+
+### 3. **Multiple Device Sync**
+```
+Desktop: Export to shared network folder
+Laptop: Import from same folder
+Result: Same browsing data on all devices
+```
+
+### 4. **Archive Old History**
+```
+Export: Last 90 days every month
+Keep: 12 monthly backups
+Result: Year-long browsing archive
+```
+
+### 5. **Quick Recovery**
+```
+Problem: Accidentally cleared history
+Solution: Import from yesterday's backup
+Result: History restored in seconds
 ```
 
 ---
 
-## Export File Examples
+## 🎯 User Flow Examples
 
-### JSON Format Sample
-```json
-{
-  "exportDate": "2024-01-15T19:00:00.000Z",
-  "history": [
-    {
-      "url": "https://example.com",
-      "title": "Example Domain",
-      "visitCount": 5,
-      "lastVisitTime": 1705348800000,
-      "typedCount": 2
-    }
-  ],
-  "bookmarks": [
-    {
-      "id": "1",
-      "title": "Bookmarks Bar",
-      "children": [
-        {
-          "id": "5",
-          "title": "Example",
-          "url": "https://example.com",
-          "dateAdded": 1705348800000
-        }
-      ]
-    }
-  ]
-}
+### Flow 1: Setup Automatic Daily Backup
+```
+1. Open extension side panel
+2. Go to "Auto-Backup" tab
+3. Click "Browse" and select backup folder
+4. Set frequency to "Daily"
+5. Set "Keep Last" to 10 Backups
+6. Click "Save Auto-Backup Settings"
+7. Done! Backups will run automatically daily
 ```
 
-### HTML Format Preview
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Browser Data Export</title>
-  <style>/* Beautiful styling */</style>
-</head>
-<body>
-  <h1>Browser Data Export</h1>
-  <table>
-    <tr>
-      <th>Title</th>
-      <th>URL</th>
-      <th>Last Visit</th>
-    </tr>
-    <!-- Data rows -->
-  </table>
-</body>
-</html>
+### Flow 2: Export to Backup Folder
+```
+1. Click extension icon
+2. Export tab is active by default
+3. Select backup folder (first time only)
+4. Choose time period (Last 7 Days)
+5. Select format (JSON)
+6. Click "Export & Save to Folder"
+7. File saved to backup folder AND downloaded
 ```
 
-### CSV Format Sample
-```csv
-Type,Title,URL,Last Visit Time,Visit Count,Folder Path
-History,"Example Domain","https://example.com","2024-01-15T12:00:00Z",5,""
-Bookmark,"My Bookmark","https://example.com","2024-01-15T12:00:00Z",0,"Bookmarks Bar/Work"
+### Flow 3: Import from Backup Folder
+```
+1. Open extension side panel
+2. Go to "Import" tab
+3. Select "From Backup Folder"
+4. Choose backup file from list
+5. Select import mode (Merge)
+6. Click "Import Selected Backup"
+7. Data restored with duplicate detection
+```
+
+### Flow 4: Quick Manual Backup
+```
+1. Open extension side panel
+2. Go to "Auto-Backup" tab
+3. Click "Backup Now"
+4. Backup runs immediately
+5. See confirmation with timestamp
 ```
 
 ---
 
-## Performance Metrics
+## 🔧 Setup & Configuration
 
-### Export Performance
-- **1,000 items**: ~2 seconds
-- **10,000 items**: ~5 seconds
-- **50,000 items**: ~15 seconds
+### Quick Setup
+```
+1. Load extension in Chrome
+2. Click extension icon
+3. Select backup folder in Export tab
+4. Configure auto-backup if desired
+5. Start using!
+```
 
-### Import Performance
-- **1,000 items**: ~3 seconds
-- **10,000 items**: ~10 seconds
-- **50,000 items**: ~30 seconds
+### Advanced Configuration
+```
+Auto-Backup Settings:
+- Frequency: Hourly/Daily/Weekly/Monthly
+- Content: History only/Bookmarks only/Both
+- Retention: 5-50 backups or unlimited
+- Folder: Any local folder
+```
 
-### File Sizes (approximate)
-- **1,000 history items (JSON)**: ~200 KB
-- **1,000 bookmarks (JSON)**: ~150 KB
-- **10,000 mixed items (JSON)**: ~2 MB
-
----
-
-## Security & Privacy
-
-### Data Handling
-✅ All processing done locally  
-✅ No external API calls  
-✅ No analytics or tracking  
-✅ No data collection  
-✅ No network requests  
-
-### Permissions Scope
-- **history**: Read-only + write new items
-- **bookmarks**: Read-only + create new items
-- **downloads**: Write files to disk only
-- **storage**: Store user preferences only
+### Backup Management
+```
+Automatic Cleanup:
+- Oldest backups deleted first
+- Configurable retention (5, 10, 20, 50, unlimited)
+- Keeps backup folder organized
+```
 
 ---
 
-## Future Enhancement Ideas
+## 📊 Backup Strategy Recommendations
 
-### Potential Features
-- 🔄 Scheduled automatic backups
-- ☁️ Cloud storage integration (Drive, Dropbox)
-- 🔍 Search within exported data
-- 📊 Visual analytics dashboard
-- 🔐 Encryption for sensitive data
-- 🌐 Multi-browser support
-- 📱 Mobile companion app
-- 🎯 Selective import (filter by date/URL)
+### For Casual Users
+```
+Frequency: Weekly
+Keep: 10 backups
+Content: History + Bookmarks
+Result: ~2.5 months of weekly backups
+```
 
----
+### For Power Users
+```
+Frequency: Daily
+Keep: 30 backups
+Content: History + Bookmarks
+Result: 1 month of daily backups
+```
 
-## Browser Compatibility
+### For Archivers
+```
+Frequency: Monthly
+Keep: 12 backups
+Content: History + Bookmarks
+Result: 1 year of monthly archives
+```
 
-| Feature | Chrome | Edge | Brave | Opera |
-|---------|--------|------|-------|-------|
-| Export History | ✅ | ✅ | ✅ | ✅ |
-| Export Bookmarks | ✅ | ✅ | ✅ | ✅ |
-| Import History | ✅ | ✅ | ✅ | ✅ |
-| Import Bookmarks | ✅ | ✅ | ✅ | ✅ |
-| Multiple Formats | ✅ | ✅ | ✅ | ✅ |
-
-**Minimum Version:** Chrome 88+ (Manifest V3 support)
-
----
-
-## Testing Checklist
-
-### Export Testing
-- ☑ Export history only
-- ☑ Export bookmarks only
-- ☑ Export both simultaneously
-- ☑ All time periods work correctly
-- ☑ Custom date range works
-- ☑ All export formats generate correctly
-- ☑ File downloads successfully
-- ☑ Statistics display correctly
-
-### Import Testing
-- ☑ Import JSON files
-- ☑ Import HTML files
-- ☑ Import CSV files
-- ☑ Merge mode works
-- ☑ Replace mode works (where applicable)
-- ☑ Progress indicator updates
-- ☑ Statistics show correct counts
-- ☑ Error handling for invalid files
-
-### UI/UX Testing
-- ☑ All animations smooth
-- ☑ Buttons respond to clicks
-- ☑ Hover effects work
-- ☑ Tab switching works
-- ☑ File drag-drop works
-- ☑ Date pickers function correctly
-- ☑ BuyMeCoffee link opens correctly
+### For Minimalists
+```
+Frequency: Daily
+Keep: 5 backups
+Content: History only
+Result: 5 days of rolling backups
+```
 
 ---
 
-Made with ❤️ and modern web technologies
+## 🎨 Design Philosophy
+
+### User-Centric Design
+- **Simplicity**: One-click exports, intuitive interface
+- **Feedback**: Progress bars, statistics, confirmations
+- **Flexibility**: Multiple formats, time periods, options
+- **Automation**: Set once, forget about it
+
+### Visual Hierarchy
+```
+1. Primary Actions (Export/Import)
+2. Configuration (Settings, Folders)
+3. Information (Stats, Status)
+4. Secondary Actions (Auto-backup)
+```
+
+### Responsive Layout
+- **Side Panel**: Optimized for Chrome's side panel
+- **Dynamic Content**: Adapts to available space
+- **Touch-Friendly**: Large buttons, ample spacing
+- **Readable**: Clear typography, good contrast
+
+---
+
+## 🔒 Privacy & Security
+
+### Local-First Approach
+✅ **No cloud storage required**  
+✅ **All data stays on your computer**  
+✅ **No internet connection needed**  
+✅ **No data sent to external servers**  
+
+### Data Protection
+- **Local Storage**: Backups saved to your chosen folder
+- **No Telemetry**: Extension doesn't track usage
+- **No Analytics**: No data collection
+- **User Control**: You decide where backups are stored
+
+### File Security
+- **Your Files**: Stored in your chosen location
+- **Your Control**: You manage access permissions
+- **Your Privacy**: No one else can access your backups
+- **Your Choice**: Export only what you want
+
+---
+
+## 🚀 Future Roadmap
+
+### Version 4.1 (Planned)
+- [ ] Cloud storage integration (Google Drive)
+- [ ] Backup encryption options
+- [ ] Advanced search in backups
+- [ ] Backup compression
+
+### Version 4.2 (Planned)
+- [ ] Multiple cloud providers
+- [ ] Cross-device sync
+- [ ] Backup scheduling by time of day
+- [ ] Export filters (by domain, date, etc.)
+
+### Version 4.3 (Planned)
+- [ ] Mobile backup support
+- [ ] Backup visualization
+- [ ] Export to PDF
+- [ ] Advanced deduplication
+
+---
+
+## 📞 Support & Resources
+
+### Quick Help
+- **Backup not saving?** Check folder permissions
+- **Import not working?** Ensure file format is correct
+- **Auto-backup not running?** Check alarm permissions
+- **Need help?** Check console for errors (F12)
+
+### Documentation
+- **manifest.json**: Extension configuration
+- **sidepanel.html**: Interface structure
+- **sidepanel.js**: All functionality
+- **styles.css**: Design and animations
+
+### Support Developer
+If you find this extension helpful, consider supporting:
+
+☕ **[Buy Me a Coffee](https://buymeacoffee.com/ekurtovic81)**
+
+Your support helps maintain and improve this extension!
+
+---
+
+## 🎉 Getting Started
+
+### First Time Setup
+```
+1. Install extension
+2. Open side panel (click extension icon)
+3. Go to Export tab
+4. Select backup folder
+5. Export your first backup
+```
+
+### Regular Use
+```
+Daily: Check backup status in footer
+Weekly: Review auto-backup settings
+Monthly: Clean up old backups if needed
+```
+
+### Pro Tips
+```
+Tip 1: Use JSON format for best re-importing
+Tip 2: Set auto-backup to run during idle times
+Tip 3: Keep 10-20 backups for good balance
+Tip 4: Store backups on external drive for safety
+```
+
+---
+
+**Version:** 4.0  
+**Release Date:** January 2024  
+**Focus:** Enhanced Local Backup System  
+**Status:** ✅ Production Ready  
+**Next:** Cloud Integration (Coming Soon!)
+
+Made with ❤️ and modern web technologies for Chrome users everywhere

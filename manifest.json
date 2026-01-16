@@ -1,25 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Export/Import History & Bookmarks",
-  "version": "2.0.0",
-  "description": "Export and import your browser history and bookmarks with cloud sync and automatic backups",
+  "version": "4.0.0",
+  "description": "Export and import your browser history and bookmarks with local auto-backup",
   "permissions": [
     "history",
     "bookmarks",
     "downloads",
     "storage",
     "alarms",
-    "identity",
     "sidePanel"
-  ],
-  "host_permissions": [
-    "*://*.google.com/*",
-    "*://*.googleapis.com/*",
-    "*://*.dropboxapi.com/*",
-    "*://*.microsoft.com/*",
-    "*://*.box.com/*",
-    "*://*.pcloud.com/*",
-    "*://*.mega.co.nz/*"
   ],
   "action": {
     "default_title": "Export/Import History & Bookmarks"

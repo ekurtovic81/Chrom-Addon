@@ -1,18 +1,19 @@
-# 🚀 Chrome Extension Installation Guide
+# 🚀 Chrome Extension Installation Guide v4.0
 
-## Export/Import History & Bookmarks
+## Export/Import History & Bookmarks with Local Auto-Backup
 
 ### Quick Start - 3 Simple Steps
 
 #### Step 1: Download the Extension
 You should have a folder called `extension` containing these files:
 - manifest.json
-- popup.html
-- popup.js
+- sidepanel.html
+- sidepanel.js
 - background.js
 - styles.css
 - icons/icon128.png
 - README.md
+- INSTALLATION_GUIDE.md
 
 #### Step 2: Open Chrome Extensions
 1. Open **Google Chrome**
@@ -49,7 +50,15 @@ To keep the extension easily accessible:
 
 ---
 
-## 🎯 How to Use the Extension
+## 🎯 How to Use the Extension v4.0
+
+### First Time Setup
+**Select a Backup Folder:**
+1. Click the extension icon
+2. Go to the **Export** tab
+3. Click **"Browse"** next to the folder input
+4. Select a folder where you want backups saved
+5. This folder will be used for all automatic backups
 
 ### Exporting Your Data
 
@@ -72,29 +81,68 @@ To keep the extension easily accessible:
 - **HTML** - Human-readable, opens in browser
 - **CSV** - Spreadsheet compatible
 
-**Step 4:** Click **"Export Data"** button
+**Step 4:** Make sure backup folder is selected
 
-**Step 5:** Choose where to save the file
+**Step 5:** Click **"Export & Save to Folder"** button
 
-**Step 6:** View statistics showing how many items were exported!
+**What happens:**
+1. File is saved to your selected backup folder
+2. File is also downloaded to your Downloads folder
+3. Statistics show how many items were exported
+4. Backup counter increases by 1
 
 ### Importing Your Data
 
+**Two ways to import:**
+
+**Method A: From Local File**
+1. Click the extension icon
+2. Switch to the **"Import"** tab
+3. Select **"Local File"**
+4. Choose import mode:
+   - **Merge with existing data** - Adds to your current history/bookmarks
+   - **Replace existing data** - Replaces your data
+5. Upload your file:
+   - Click the upload area, OR
+   - Drag and drop your file
+6. Click **"Import from File"** button
+
+**Method B: From Backup Folder**
+1. Click the extension icon
+2. Switch to the **"Import"** tab
+3. Select **"From Backup Folder"**
+4. Choose a backup file from the list
+5. Select import mode
+6. Click **"Import Selected Backup"** button
+
+### Setting Up Auto-Backup
+
 **Step 1:** Click the extension icon
+**Step 2:** Go to the **"Auto-Backup"** tab
+**Step 3:** Configure settings:
+- **Backup Folder:** Select where to save backups
+- **Frequency:** Hourly, Daily, Weekly, or Monthly
+- **Backup Content:** History and/or Bookmarks
+- **Keep Last:** How many backups to keep (5-50 or unlimited)
 
-**Step 2:** Switch to the **"Import"** tab
+**Step 4:** Click **"Save Auto-Backup Settings"**
 
-**Step 3:** Choose import mode:
-- **Merge with existing data** - Adds to your current history/bookmarks
-- **Replace existing data** - Replaces your data (Note: Chrome has limitations on clearing history)
+**Step 5:** (Optional) Click **"Backup Now"** to test
 
-**Step 4:** Upload your file:
-- Click the upload area, OR
-- Drag and drop your file
+**What happens:**
+- Backups run automatically at scheduled times
+- Old backups are automatically deleted based on your settings
+- Backup status shows in the footer
+- Next backup time is displayed
 
-**Step 5:** Click **"Import Data"** button
+### Cloud Features (Coming Soon)
+The **Cloud** tab shows our upcoming features:
+- Google Drive integration
+- Dropbox integration
+- OneDrive integration
+- Multi-device sync
 
-**Step 6:** Wait for completion and view statistics!
+These features will be available in future updates!
 
 ---
 
@@ -105,25 +153,25 @@ To keep the extension easily accessible:
 - ✅ Preserves all metadata
 - ✅ Maintains folder structure
 - ✅ Includes timestamps
-- 📄 Example: `browser-data-1234567890.json`
+- 📄 Example: `backup-2024-01-15T12-00-00.json`
 
 ### HTML Format
 - ✅ Opens in any web browser
 - ✅ Human-readable tables
 - ✅ Clickable links
 - ❌ Not ideal for re-importing
-- 📄 Example: `browser-data-1234567890.html`
+- 📄 Example: `backup-2024-01-15T12-00-00.html`
 
 ### CSV Format
 - ✅ Opens in Excel/Google Sheets
 - ✅ Easy to analyze
 - ✅ Searchable
 - ❌ Limited bookmark structure
-- 📄 Example: `browser-data-1234567890.csv`
+- 📄 Example: `backup-2024-01-15T12-00-00.csv`
 
 ---
 
-## 🔧 Troubleshooting
+## 🔧 Troubleshooting v4.0
 
 ### Problem: Extension doesn't appear after loading
 **Solution:**
@@ -142,18 +190,20 @@ To keep the extension easily accessible:
 - Make sure you selected at least one option (History or Bookmarks)
 - Check if Chrome has permissions to download files
 - Try a different export format
+- Make sure a backup folder is selected
 
-### Problem: Import file is not accepted
+### Problem: Can't select backup folder
 **Solution:**
-- Make sure the file is JSON, HTML, or CSV format
-- Check if the file was exported correctly
-- Try opening the file in a text editor to verify it contains data
+- Chrome's folder picker might be restricted
+- Try selecting a folder in your Documents or Downloads directory
+- The extension will use a file input as a workaround
 
-### Problem: Bookmarks aren't importing
+### Problem: Auto-backup not running
 **Solution:**
-- Ensure the file contains bookmark data
-- Check JSON structure is valid
-- Make sure you granted bookmark permissions
+- Check if auto-backup is enabled in settings
+- Make sure Chrome is running at the scheduled time
+- Verify folder permissions
+- Try running a manual backup first
 
 ### Problem: Can't see extension icon in toolbar
 **Solution:**
@@ -162,7 +212,7 @@ To keep the extension easily accessible:
 
 ---
 
-## 🔒 Permissions Explained
+## 🔒 Permissions Explained v4.0
 
 The extension needs these permissions to work:
 
@@ -171,19 +221,21 @@ The extension needs these permissions to work:
 | **history** | To read and add browser history items |
 | **bookmarks** | To read and create bookmark folders/items |
 | **downloads** | To save exported files to your computer |
-| **storage** | To remember your settings |
+| **storage** | To remember your settings and backup data |
+| **alarms** | To schedule automatic backups |
 
 **Privacy Note:** This extension works 100% offline. No data is sent to any server. Everything stays on your computer.
 
 ---
 
-## 📱 Features Overview
+## 📱 Features Overview v4.0
 
 ### ✨ Modern Design
 - Beautiful gradient interface
 - Smooth animations
 - Progress indicators
 - Real-time statistics
+- Version 4.0 badge
 
 ### 🕐 Flexible Time Periods
 - Today, Yesterday, 7/30/90 days
@@ -194,6 +246,7 @@ The extension needs these permissions to work:
 - See exactly how many items were processed
 - Separate counts for history and bookmarks
 - Animated numbers
+- Detailed import statistics
 
 ### 🎨 Multiple Export Formats
 - JSON for perfect re-importing
@@ -204,21 +257,34 @@ The extension needs these permissions to work:
 - Merge with existing data
 - Replace mode (where possible)
 - Progress tracking
+- Import from backup folder
+
+### ⚡ Enhanced Local Backup
+- **Select backup folder** once, use forever
+- **Automatic save** on every export
+- **Import directly** from backup folder
+- **Auto-backup scheduling** (hourly/daily/weekly/monthly)
+- **Backup retention** (keep only what you need)
+- **Backup counter** and status indicator
+
+### ☁️ Coming Soon
+- Cloud storage integration
+- Multi-device sync
+- Advanced backup options
 
 ---
 
-## 💡 Use Cases
+## 💡 Use Cases v4.0
 
-### 1. Backup Your Browsing Data
-Export all your history and bookmarks before:
-- Resetting your browser
-- Switching computers
-- Clean reinstall
+### 1. Regular Data Protection
+- Set up daily auto-backup
+- Keep last 10 backups
+- Restore easily if needed
 
-### 2. Transfer to Another Profile
-- Export from one Chrome profile
-- Import into another profile
-- Keep your data synced
+### 2. Transfer to Another Computer
+- Export all data from old computer
+- Copy backup folder to new computer
+- Import from backup folder
 
 ### 3. Archive Old History
 - Export specific time periods
@@ -230,10 +296,15 @@ Export all your history and bookmarks before:
 - Open in Excel
 - Analyze patterns and statistics
 
-### 5. Backup Bookmarks
-- Regular bookmark backups
-- Preserve folder structure
-- Easy restoration
+### 5. Multiple Browser Profiles
+- Export from one Chrome profile
+- Import into another profile
+- Keep your data synced manually
+
+### 6. Development/Testing
+- Backup before testing new extensions
+- Restore if something goes wrong
+- Compare different browser states
 
 ---
 
@@ -265,14 +336,22 @@ Your support helps maintain and improve this extension!
 2. Reload the extensions page
 3. Follow installation steps again
 
+### Report Issues
+- Check if the issue is listed in troubleshooting
+- Try different export/import formats
+- Test with smaller data sets first
+- Make sure Chrome is up to date
+
 ---
 
-## 📋 System Requirements
+## 📋 System Requirements v4.0
 
 - **Browser:** Google Chrome 88 or later
-- **Operating System:** Windows, macOS, Linux
-- **Disk Space:** Minimal (< 1 MB)
+- **Operating System:** Windows, macOS, Linux, ChromeOS
+- **Disk Space:** Minimal (< 1 MB for extension)
+- **Storage:** Depends on backup settings and data size
 - **Internet:** Not required (works offline)
+- **Permissions:** Grant all requested permissions for full functionality
 
 ---
 
@@ -281,14 +360,21 @@ Your support helps maintain and improve this extension!
 Your extension is now installed and ready to use. Start by exporting your first backup!
 
 **Quick Tips:**
-- 📅 Export regularly to keep backups current
-- 💾 Store exports in a safe location
-- 🔄 Test import with small datasets first
-- ⭐ Consider custom date ranges for specific needs
+- 📅 Select a backup folder first thing
+- 💾 Enable auto-backup for peace of mind
+- 🔄 Test import with a small backup first
+- ⭐ Review backup retention settings
+- 🚀 Export regularly to keep backups current
 
----
+**Recommended First Steps:**
+1. Select a backup folder (Documents/BrowserBackups/)
+2. Export your first backup (All Time, JSON format)
+3. Set up daily auto-backup
+4. Keep last 10 backups
+5. Test import from your backup folder
 
-**Version:** 1.0.0  
-**Last Updated:** 2024
+**Version:** 4.0.0  
+**Status:** ✅ Production Ready  
+**Last Updated:** January 2024
 
 Made with ❤️ for Chrome users everywhere

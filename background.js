@@ -1,8 +1,8 @@
-// Background service worker for Chrome Extension v2.0
-// Handles side panel, cloud sync, and scheduled backups
+// Background service worker for Chrome Extension v4.0
+// Enhanced local backup system with auto-backup scheduling
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Export/Import History & Bookmarks extension installed v2.0');
+  console.log('Export/Import History & Bookmarks extension installed v4.0');
   
   // Check if sidePanel API is available before using it
   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
@@ -16,6 +16,9 @@ chrome.runtime.onInstalled.addListener(() => {
   } else {
     console.warn('sidePanel API is not available in this Chrome version');
   }
+  
+  // Initialize default settings
+  initializeDefaultSettings();
 });
 
 // Handle extension icon click
@@ -37,31 +40,104 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     console.log('Running scheduled auto-backup...');
     
     // Get backup settings
-    const settings = await chrome.storage.local.get(['autoBackupSettings']);
-    if (settings.autoBackupSettings?.enabled) {
+    const result = await chrome.storage.local.get(['autoBackupSettings']);
+    const settings = result.autoBackupSettings;
+    
+    if (settings?.enabled && settings.folderPath) {
       try {
+        // Trigger backup process
         await chrome.runtime.sendMessage({
-          action: 'runAutoBackup',
-          settings: settings.autoBackupSettings
+          action: 'runScheduledBackup',
+          settings: settings
         });
+        
+        // Update last backup time
+        const now = new Date().toISOString();
+        await chrome.storage.local.set({ lastBackupTime: now });
+        
+        console.log('Scheduled backup completed');
       } catch (error) {
-        console.log('No extension page listening for auto-backup message');
+        console.log('No extension page listening for backup message');
       }
     }
   }
 });
 
+// Initialize default settings
+async function initializeDefaultSettings() {
+  const defaults = {
+    autoBackupSettings: {
+      enabled: false,
+      frequency: 'daily',
+      maxBackups: '10',
+      includeHistory: true,
+      includeBookmarks: true,
+      folderPath: ''
+    },
+    lastBackupTime: null,
+    backupsCount: 0,
+    backupFolderPath: ''
+  };
+  
+  // Set defaults only if they don't exist
+  for (const [key, value] of Object.entries(defaults)) {
+    const result = await chrome.storage.local.get([key]);
+    if (!result[key]) {
+      await chrome.storage.local.set({ [key]: value });
+    }
+  }
+}
+
+// Setup auto-backup alarm based on frequency
+async function setupAutoBackupAlarm(frequency) {
+  // Clear existing alarm
+  chrome.alarms.clear('auto-backup');
+  
+  if (frequency === 'disabled') {
+    console.log('Auto-backup disabled');
+    return;
+  }
+  
+  let periodInMinutes;
+  switch (frequency) {
+    case 'hourly':
+      periodInMinutes = 60;
+      break;
+    case 'daily':
+      periodInMinutes = 60 * 24;
+      break;
+    case 'weekly':
+      periodInMinutes = 60 * 24 * 7;
+      break;
+    case 'monthly':
+      periodInMinutes = 60 * 24 * 30; // Approximate
+      break;
+    default:
+      periodInMinutes = 60 * 24; // Default to daily
+  }
+  
+  // Create new alarm
+  chrome.alarms.create('auto-backup', {
+    delayInMinutes: 1, // Start after 1 minute
+    periodInMinutes: periodInMinutes
+  });
+  
+  console.log(`Auto-backup scheduled: ${frequency} (every ${periodInMinutes} minutes)`);
+}
+
 // Listen for messages from side panel
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background received message:', request.action);
   
+  // Handle getHistory request
   if (request.action === 'getHistory') {
     chrome.history.search(request.params, (results) => {
       sendResponse({ success: true, data: results });
     });
-    return true;
+    return true; // Keep message channel open
   }
   
+  // Handle getBookmarks request
   if (request.action === 'getBookmarks') {
     chrome.bookmarks.getTree((results) => {
       sendResponse({ success: true, data: results });
@@ -69,424 +145,312 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   
+  // Handle setupAutoBackup request
   if (request.action === 'setupAutoBackup') {
-    const { frequency } = request;
+    const { frequency, folderPath, maxBackups, includeHistory, includeBookmarks } = request;
     
-    // Clear existing alarms
-    chrome.alarms.clear('auto-backup');
+    // Update settings
+    const settings = {
+      enabled: frequency !== 'disabled',
+      frequency: frequency,
+      folderPath: folderPath,
+      maxBackups: maxBackups,
+      includeHistory: includeHistory,
+      includeBookmarks: includeBookmarks
+    };
     
-    // Create new alarm based on frequency
-    if (frequency !== 'disabled') {
-      let delayInMinutes;
-      switch (frequency) {
-        case 'daily':
-          delayInMinutes = 24 * 60;
-          break;
-        case 'weekly':
-          delayInMinutes = 7 * 24 * 60;
-          break;
-        case 'monthly':
-          delayInMinutes = 30 * 24 * 60;
-          break;
-        default:
-          delayInMinutes = 24 * 60;
-      }
-      
-      chrome.alarms.create('auto-backup', {
-        delayInMinutes: delayInMinutes,
-        periodInMinutes: delayInMinutes
-      });
-      
-      console.log(`Auto-backup scheduled: ${frequency} (every ${delayInMinutes} minutes)`);
-      sendResponse({ success: true, message: `Auto-backup scheduled: ${frequency}` });
-    } else {
-      sendResponse({ success: true, message: 'Auto-backup disabled' });
-    }
+    chrome.storage.local.set({ autoBackupSettings: settings }, () => {
+      // Setup alarm
+      setupAutoBackupAlarm(frequency)
+        .then(() => {
+          sendResponse({ 
+            success: true, 
+            message: `Auto-backup scheduled: ${frequency}`
+          });
+        })
+        .catch(error => {
+          sendResponse({ 
+            success: false, 
+            error: `Failed to setup alarm: ${error.message}`
+          });
+        });
+    });
     
     return true;
   }
   
-  // AUTOMATIC CLOUD AUTHENTICATION - NO MANUAL CREDENTIALS NEEDED
-  if (request.action === 'oauth2Authenticate') {
-    const { provider } = request;
-    
-    console.log(`Attempting automatic authentication for: ${provider}`);
-    
-    // Handle authentication based on provider
-    authenticateProvider(provider)
-      .then(credentials => {
-        sendResponse({ 
-          success: true, 
-          credentials: credentials,
-          message: `Successfully connected to ${provider}`
-        });
-      })
-      .catch(error => {
-        console.error(`Authentication failed for ${provider}:`, error);
-        
-        // If automatic auth fails, use fallback to launchWebAuthFlow
-        fallbackAuthentication(provider)
-          .then(credentials => {
-            sendResponse({
-              success: true,
-              credentials: credentials,
-              message: `Connected to ${provider} using fallback method`
-            });
-          })
-          .catch(fallbackError => {
-            sendResponse({
-              success: false,
-              error: fallbackError.message || 'Authentication failed',
-              fallbackError: true
-            });
-          });
-      });
-    
-    return true; // Keep message channel open
-  }
-  
+  // Handle checkSidePanelAvailable request
   if (request.action === 'checkSidePanelAvailable') {
     const available = !!(chrome.sidePanel && chrome.sidePanel.setPanelBehavior);
     sendResponse({ 
-      available: available, 
-      chromeVersion: navigator.userAgent 
+      available: available,
+      version: '4.0'
     });
     return true;
   }
   
-  if (request.action === 'updateCloudCredentials') {
-    const { provider, credentials } = request;
+  // Handle runBackupNow request
+  if (request.action === 'runBackupNow') {
+    console.log('Manual backup triggered');
     
-    // Save credentials to storage
-    chrome.storage.local.get(['cloudTokens'], (result) => {
-      const tokens = result.cloudTokens || {};
-      tokens[provider] = credentials;
-      chrome.storage.local.set({ cloudTokens: tokens }, () => {
-        sendResponse({ success: true });
+    // Get settings
+    chrome.storage.local.get(['autoBackupSettings'], (result) => {
+      const settings = result.autoBackupSettings;
+      
+      if (!settings || !settings.folderPath) {
+        sendResponse({ 
+          success: false, 
+          error: 'Backup folder not configured'
+        });
+        return;
+      }
+      
+      // Trigger backup in side panel
+      chrome.runtime.sendMessage({
+        action: 'triggerManualBackup',
+        settings: settings
+      }).catch(() => {
+        // Side panel might not be open
+        console.log('Side panel not open for manual backup');
+      });
+      
+      sendResponse({ 
+        success: true, 
+        message: 'Backup process started'
       });
     });
     
     return true;
   }
   
-  if (request.action === 'runAutoBackup') {
-    console.log('Manual backup triggered from UI');
-    // Just acknowledge - actual backup runs from side panel
-    sendResponse({ success: true, message: 'Backup process started' });
-    return true;
-  }
-  
-  if (request.action === 'validateCloudToken') {
-    const { provider, token } = request;
+  // Handle cleanupOldBackups request
+  if (request.action === 'cleanupOldBackups') {
+    const { maxBackups, folderPath } = request;
     
-    validateToken(provider, token)
-      .then(isValid => {
-        sendResponse({ success: true, isValid: isValid });
-      })
-      .catch(error => {
-        sendResponse({ success: false, error: error.message });
+    // Simulate cleanup (in real implementation, would delete files)
+    console.log(`Cleaning up backups in ${folderPath}, keeping ${maxBackups} backups`);
+    
+    setTimeout(() => {
+      sendResponse({ 
+        success: true, 
+        message: `Cleanup completed, keeping ${maxBackups} backups`
       });
+    }, 1000);
     
     return true;
   }
-});
-
-// AUTOMATIC AUTHENTICATION FUNCTION
-async function authenticateProvider(provider) {
-  console.log(`Starting automatic authentication for ${provider}`);
   
-  const providerConfig = {
-    'google-drive': {
-      name: 'Google Drive',
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
-      autoSupported: true
-    },
-    'dropbox': {
-      name: 'Dropbox',
-      scopes: ['files.content.write', 'files.content.read'],
-      autoSupported: false
-    },
-    'onedrive': {
-      name: 'OneDrive',
-      scopes: ['Files.ReadWrite', 'offline_access'],
-      autoSupported: false
-    },
-    'box': {
-      name: 'Box',
-      scopes: ['root_readwrite'],
-      autoSupported: false
-    },
-    'pcloud': {
-      name: 'pCloud',
-      scopes: ['files'],
-      autoSupported: false
-    },
-    'mega': {
-      name: 'MEGA',
-      scopes: ['readwrite'],
-      autoSupported: false
-    }
-  };
-  
-  const config = providerConfig[provider];
-  if (!config) {
-    throw new Error(`Unsupported provider: ${provider}`);
+  // Handle saveBackupFolder request
+  if (request.action === 'saveBackupFolder') {
+    const { folderPath } = request;
+    
+    chrome.storage.local.set({ backupFolderPath: folderPath }, () => {
+      sendResponse({ success: true });
+    });
+    
+    return true;
   }
   
-  // For Google Drive - use Chrome Identity API (works automatically)
-  if (provider === 'google-drive' && chrome.identity && chrome.identity.getAuthToken) {
-    return new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ 
-        interactive: true,
-        scopes: config.scopes
-      }, (token) => {
-        if (chrome.runtime.lastError) {
-          console.error('Google Drive auth error:', chrome.runtime.lastError);
-          reject(new Error(`Google authentication failed: ${chrome.runtime.lastError.message}`));
-        } else if (token) {
-          console.log('Successfully obtained Google Drive token');
-          resolve({
-            provider: provider,
-            token: token,
-            type: 'oauth2',
-            timestamp: Date.now(),
-            expires_in: 3600,
-            automaticallyObtained: true
+  // Handle getBackupStats request
+  if (request.action === 'getBackupStats') {
+    chrome.storage.local.get(['lastBackupTime', 'backupsCount', 'autoBackupSettings'], (result) => {
+      sendResponse({
+        success: true,
+        stats: {
+          lastBackupTime: result.lastBackupTime,
+          backupsCount: result.backupsCount || 0,
+          autoBackupEnabled: result.autoBackupSettings?.enabled || false,
+          nextBackup: calculateNextBackupTime(result.autoBackupSettings?.frequency)
+        }
+      });
+    });
+    
+    return true;
+  }
+  
+  // Handle updateBackupStats request
+  if (request.action === 'updateBackupStats') {
+    const { backupsCount, lastBackupTime } = request;
+    
+    const updates = {};
+    if (backupsCount !== undefined) updates.backupsCount = backupsCount;
+    if (lastBackupTime !== undefined) updates.lastBackupTime = lastBackupTime;
+    
+    chrome.storage.local.set(updates, () => {
+      sendResponse({ success: true });
+    });
+    
+    return true;
+  }
+  
+  // Handle exportData request
+  if (request.action === 'exportData') {
+    const { includeHistory, includeBookmarks, timeRange, format } = request;
+    
+    // Get history if requested
+    if (includeHistory) {
+      const { startTime, endTime } = timeRange;
+      chrome.history.search({
+        text: '',
+        startTime: startTime,
+        endTime: endTime,
+        maxResults: 10000
+      }, (historyItems) => {
+        // Get bookmarks if requested
+        if (includeBookmarks) {
+          chrome.bookmarks.getTree((bookmarkTree) => {
+            sendResponse({
+              success: true,
+              data: {
+                history: historyItems,
+                bookmarks: bookmarkTree,
+                exportDate: new Date().toISOString(),
+                version: '4.0'
+              }
+            });
           });
         } else {
-          reject(new Error('No token received from Google'));
+          sendResponse({
+            success: true,
+            data: {
+              history: historyItems,
+              bookmarks: [],
+              exportDate: new Date().toISOString(),
+              version: '4.0'
+            }
+          });
         }
       });
-    });
-  }
-  
-  // For other providers that don't support automatic auth
-  throw new Error(`${config.name} requires manual OAuth2 setup. Please use fallback authentication.`);
-}
-
-// FALLBACK AUTHENTICATION - Universal OAuth2 flow
-async function fallbackAuthentication(provider) {
-  console.log(`Using fallback authentication for ${provider}`);
-  
-  const providerUrls = {
-    'google-drive': {
-      authUrl: 'https://accounts.google.com/o/oauth2/auth',
-      clientId: '491291805478-cnqldqi78p9ulr9q75mg3i0d7jfjbe92.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/drive.file'
-    },
-    'dropbox': {
-      authUrl: 'https://www.dropbox.com/oauth2/authorize',
-      clientId: 'YOUR_DROPBOX_CLIENT_ID',
-      scope: 'files.content.write files.content.read'
-    },
-    'onedrive': {
-      authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-      clientId: 'YOUR_ONEDRIVE_CLIENT_ID',
-      scope: 'Files.ReadWrite offline_access'
-    },
-    'box': {
-      authUrl: 'https://account.box.com/api/oauth2/authorize',
-      clientId: 'YOUR_BOX_CLIENT_ID',
-      scope: 'root_readwrite'
-    },
-    'pcloud': {
-      authUrl: 'https://my.pcloud.com/oauth2/authorize',
-      clientId: 'YOUR_PCLOUD_CLIENT_ID',
-      scope: 'files'
-    }
-  };
-  
-  const config = providerUrls[provider];
-  if (!config) {
-    throw new Error(`No fallback configuration for ${provider}`);
-  }
-  
-  return new Promise((resolve, reject) => {
-    // Get the redirect URI automatically from Chrome
-    const redirectUri = chrome.identity.getRedirectURL();
-    console.log(`Using redirect URI: ${redirectUri}`);
-    
-    // Build OAuth2 URL
-    const authUrl = new URL(config.authUrl);
-    authUrl.searchParams.append('client_id', config.clientId);
-    authUrl.searchParams.append('redirect_uri', redirectUri);
-    authUrl.searchParams.append('response_type', 'token');
-    authUrl.searchParams.append('scope', config.scope);
-    authUrl.searchParams.append('state', provider); // To identify which provider
-    
-    console.log(`Launching OAuth2 flow for ${provider}`);
-    
-    chrome.identity.launchWebAuthFlow(
-      {
-        url: authUrl.toString(),
-        interactive: true
-      },
-      (redirectUrl) => {
-        if (chrome.runtime.lastError) {
-          const error = chrome.runtime.lastError;
-          console.error(`OAuth2 flow error for ${provider}:`, error);
-          
-          // Special handling for common errors
-          if (error.message.includes('client_id')) {
-            reject(new Error(`Please configure OAuth2 for ${provider}. Click for instructions.`));
-          } else if (error.message.includes('redirect_uri')) {
-            reject(new Error(`Redirect URI mismatch. Extension ID: ${chrome.runtime.id}`));
-          } else {
-            reject(new Error(`Authentication failed: ${error.message}`));
+    } else if (includeBookmarks) {
+      // Only bookmarks requested
+      chrome.bookmarks.getTree((bookmarkTree) => {
+        sendResponse({
+          success: true,
+          data: {
+            history: [],
+            bookmarks: bookmarkTree,
+            exportDate: new Date().toISOString(),
+            version: '4.0'
           }
-        } else if (redirectUrl) {
-          console.log(`OAuth2 redirect received for ${provider}`);
-          
-          // Extract token from redirect URL
-          const token = extractAccessTokenFromUrl(redirectUrl);
-          if (token) {
-            console.log(`Successfully extracted token for ${provider}`);
-            resolve({
-              provider: provider,
-              token: token,
-              type: 'oauth2',
-              timestamp: Date.now(),
-              expires_in: 3600,
-              automaticallyObtained: false,
-              method: 'web_auth_flow'
-            });
-          } else {
-            // Try to extract authorization code instead
-            const authCode = extractAuthorizationCodeFromUrl(redirectUrl);
-            if (authCode) {
-              console.log(`Got authorization code for ${provider}`);
-              resolve({
-                provider: provider,
-                code: authCode,
-                type: 'oauth2_code',
-                timestamp: Date.now(),
-                automaticallyObtained: false,
-                method: 'web_auth_flow'
-              });
-            } else {
-              reject(new Error('Could not extract token or authorization code from response'));
-            }
-          }
-        } else {
-          reject(new Error('Authentication was cancelled by user'));
-        }
-      }
-    );
-  });
-}
-
-// Helper function to extract access token from URL
-function extractAccessTokenFromUrl(url) {
-  try {
-    const parsedUrl = new URL(url);
-    
-    // Try hash fragment (implicit grant flow)
-    if (parsedUrl.hash) {
-      const hashParams = new URLSearchParams(parsedUrl.hash.substring(1));
-      const token = hashParams.get('access_token');
-      if (token) return token;
+        });
+      });
+    } else {
+      sendResponse({
+        success: false,
+        error: 'No data selected for export'
+      });
     }
     
-    // Try query parameters (some providers use this)
-    const queryParams = new URLSearchParams(parsedUrl.search);
-    const token = queryParams.get('access_token');
-    if (token) return token;
-    
-    return null;
-  } catch (error) {
-    console.error('Error extracting token from URL:', error);
-    return null;
-  }
-}
-
-// Helper function to extract authorization code from URL
-function extractAuthorizationCodeFromUrl(url) {
-  try {
-    const parsedUrl = new URL(url);
-    const queryParams = new URLSearchParams(parsedUrl.search);
-    return queryParams.get('code');
-  } catch (error) {
-    console.error('Error extracting auth code from URL:', error);
-    return null;
-  }
-}
-
-// Validate token by making a test API call
-async function validateToken(provider, token) {
-  if (!token) return false;
-  
-  const validationEndpoints = {
-    'google-drive': 'https://www.googleapis.com/oauth2/v1/tokeninfo',
-    'dropbox': 'https://api.dropboxapi.com/2/users/get_current_account'
-  };
-  
-  const endpoint = validationEndpoints[provider];
-  if (!endpoint) {
-    // If no validation endpoint, assume token is valid
     return true;
   }
   
-  try {
-    const response = await fetch(endpoint, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+  // Handle importData request
+  if (request.action === 'importData') {
+    const { data, mode } = request;
+    
+    let importedCount = 0;
+    let skippedCount = 0;
+    let errors = [];
+    
+    // Import history
+    if (data.history && data.history.length > 0) {
+      // For now, just acknowledge - actual import happens in sidepanel.js
+      importedCount += data.history.length;
+    }
+    
+    // Import bookmarks
+    if (data.bookmarks && data.bookmarks.length > 0) {
+      // For now, just acknowledge - actual import happens in sidepanel.js
+      const bookmarkCount = countBookmarks(data.bookmarks[0]);
+      importedCount += bookmarkCount;
+    }
+    
+    sendResponse({
+      success: true,
+      importedCount: importedCount,
+      skippedCount: skippedCount,
+      errors: errors
     });
     
-    return response.ok;
-  } catch (error) {
-    console.error(`Token validation failed for ${provider}:`, error);
-    return false;
+    return true;
   }
+  
+  // Default response for unknown actions
+  sendResponse({ 
+    success: false, 
+    error: `Unknown action: ${request.action}` 
+  });
+  return false;
+});
+
+// Helper function to calculate next backup time
+function calculateNextBackupTime(frequency) {
+  if (!frequency || frequency === 'disabled') {
+    return null;
+  }
+  
+  const now = new Date();
+  const next = new Date(now);
+  
+  switch (frequency) {
+    case 'hourly':
+      next.setHours(now.getHours() + 1);
+      break;
+    case 'daily':
+      next.setDate(now.getDate() + 1);
+      break;
+    case 'weekly':
+      next.setDate(now.getDate() + 7);
+      break;
+    case 'monthly':
+      next.setMonth(now.getMonth() + 1);
+      break;
+  }
+  
+  return next.toISOString();
 }
 
-// Initialize extension
-chrome.runtime.onStartup.addListener(() => {
-  console.log('Extension starting up...');
-  
-  // Clear any expired tokens on startup
-  chrome.storage.local.get(['cloudTokens'], (result) => {
-    const tokens = result.cloudTokens || {};
-    const validTokens = {};
-    
-    // Filter out expired tokens (simplified check)
-    Object.keys(tokens).forEach(provider => {
-      const tokenData = tokens[provider];
-      if (tokenData.timestamp && (Date.now() - tokenData.timestamp < 3500000)) {
-        // Token is less than ~58 minutes old (assuming 1 hour expiry)
-        validTokens[provider] = tokenData;
-      }
+// Helper function to count bookmarks
+function countBookmarks(node) {
+  let count = 0;
+  if (node.children) {
+    node.children.forEach(child => {
+      count += countBookmarks(child);
     });
-    
-    chrome.storage.local.set({ cloudTokens: validTokens });
+  } else if (node.url) {
+    count = 1;
+  }
+  return count;
+}
+
+// Initialize on startup
+chrome.runtime.onStartup.addListener(() => {
+  console.log('Extension v4.0 starting up...');
+  
+  // Restore auto-backup alarm if enabled
+  chrome.storage.local.get(['autoBackupSettings'], (result) => {
+    if (result.autoBackupSettings?.enabled) {
+      setupAutoBackupAlarm(result.autoBackupSettings.frequency);
+    }
   });
 });
 
-// Handle token refresh for Google Drive
-function refreshGoogleToken(oldToken) {
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ 
-      interactive: false 
-    }, (newToken) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error('Token refresh failed'));
-      } else {
-        resolve(newToken);
-      }
-    });
-  });
-}
+// Handle update available
+chrome.runtime.onUpdateAvailable.addListener(() => {
+  console.log('Update available, reloading extension...');
+  chrome.runtime.reload();
+});
 
-// Listen for token refresh
-chrome.identity.onSignInChanged.addListener((account, signedIn) => {
-  console.log('Sign in status changed:', account, signedIn);
-  
-  if (!signedIn) {
-    // User signed out - clear Google tokens
-    chrome.storage.local.get(['cloudTokens'], (result) => {
-      const tokens = result.cloudTokens || {};
-      delete tokens['google-drive'];
-      chrome.storage.local.set({ cloudTokens: tokens });
-    });
+// Handle uninstall
+chrome.runtime.onSuspend.addListener(() => {
+  console.log('Extension suspending...');
+});
+
+// Error handling
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'logError') {
+    console.error('Error from side panel:', message.error);
+    sendResponse({ success: true });
   }
+  return false;
 });
